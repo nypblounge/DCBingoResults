@@ -1,0 +1,1049 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Bingo Draft + Results Combined Overall Stats v2</title>
+<style>
+  :root {
+    --bg: #071225;
+    --bg2: #0d1a31;
+    --panel: #122240;
+    --panel2: #182b4e;
+    --text: #eef4ff;
+    --muted: #9fb1d3;
+    --line: rgba(173, 197, 255, 0.16);
+    --good: #72f0a5;
+    --bad: #ff8796;
+    --gold: #ffc86b;
+    --blue: #7ab8ff;
+    --red: #ff7088;
+    --green: #67f0b3;
+    --shadow: 0 18px 48px rgba(0,0,0,.28);
+    --radius: 18px;
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0;
+    background:
+      radial-gradient(circle at top, rgba(52,98,180,.18), transparent 34%),
+      linear-gradient(180deg, #06101f 0%, #08152a 48%, #07111f 100%);
+    color: var(--text);
+    font-family: Inter, ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+  }
+  body { padding: 28px; }
+  body.drawer-open { overflow: hidden; }
+  .wrap { max-width: 1500px; margin: 0 auto; }
+  h1, h2, h3 { margin: 0; }
+  .hero {
+    background: linear-gradient(180deg, rgba(20,38,70,.96), rgba(12,24,46,.96));
+    border: 1px solid var(--line);
+    border-radius: 28px;
+    padding: 26px 28px 22px;
+    box-shadow: var(--shadow);
+    position: relative;
+    overflow: hidden;
+  }
+  .hero::before {
+    content: "";
+    position: absolute;
+    inset: auto -10% -55% -10%;
+    height: 160px;
+    background: radial-gradient(circle, rgba(122,184,255,.12), transparent 56%);
+    pointer-events: none;
+  }
+  .hero-top {
+    display: flex; gap: 18px; justify-content: space-between; align-items: flex-start; flex-wrap: wrap;
+  }
+  .title-block p { margin: 10px 0 0; color: var(--muted); max-width: 980px; line-height: 1.5; }
+  .action-row { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+  .btn {
+    appearance: none; border: 1px solid var(--line); background: rgba(9,18,34,.75);
+    color: var(--text); border-radius: 12px; padding: 11px 14px; cursor: pointer;
+    font-weight: 600; transition: .18s ease; display:inline-flex; align-items:center; gap:8px;
+  }
+  .btn:hover { transform: translateY(-1px); border-color: rgba(173,197,255,.32); }
+  .btn input { display:none; }
+  .subnote { margin-top: 12px; color: var(--muted); font-size: 13px; }
+  .metric-grid { display: grid; grid-template-columns: repeat(6, minmax(120px, 1fr)); gap: 12px; margin-top: 20px; }
+  .metric-card {
+    background: linear-gradient(180deg, rgba(27,47,86,.92), rgba(18,34,64,.92));
+    border: 1px solid var(--line); border-radius: 18px; padding: 14px 16px;
+  }
+  .metric-card .label { color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: .1em; }
+  .metric-card .value { font-size: 28px; font-weight: 800; margin-top: 8px; }
+  .metric-card .tiny { color: var(--muted); font-size: 12px; margin-top: 6px; }
+  .grid-3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
+  .grid-2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+  details.panel {
+    margin-top: 18px;
+    background: linear-gradient(180deg, rgba(14,26,48,.96), rgba(10,20,39,.96));
+    border: 1px solid var(--line);
+    border-radius: 22px;
+    box-shadow: var(--shadow);
+    overflow: hidden;
+  }
+  details.panel > summary {
+    list-style: none; cursor: pointer; padding: 16px 18px; font-size: 20px; font-weight: 800;
+    display: flex; justify-content: space-between; align-items: center;
+    background: linear-gradient(180deg, rgba(17,33,61,.9), rgba(13,25,47,.9));
+  }
+  details.panel > summary::-webkit-details-marker { display: none; }
+  details.panel > summary .hint { font-size: 12px; color: var(--muted); font-weight: 600; text-transform: uppercase; letter-spacing: .08em; }
+  .panel-body { padding: 18px; }
+  .section-note { color: var(--muted); margin-bottom: 14px; line-height: 1.5; }
+  .small { font-size: 12px; }
+  .callout {
+    margin-top: 12px; padding: 12px 14px; border-radius: 14px;
+    border: 1px solid rgba(255,255,255,.08); background: rgba(8,16,31,.42); color: var(--muted);
+  }
+  .team-card {
+    border-radius: 22px; padding: 16px; border: 1px solid var(--line);
+    background: linear-gradient(180deg, rgba(25,45,82,.96), rgba(18,31,58,.96));
+    position: relative; overflow: hidden;
+  }
+  .team-card::before {
+    content: ""; position: absolute; inset: 0 0 auto 0; height: 4px; background: var(--team-color);
+  }
+  .team-head { display: flex; justify-content: space-between; gap: 12px; align-items: flex-start; }
+  .team-meta { color: var(--muted); margin-top: 4px; font-size: 14px; }
+  .rank-pill, .mini-pill {
+    display: inline-flex; align-items: center; gap: 8px; padding: 7px 10px; border-radius: 999px;
+    font-size: 12px; font-weight: 800; background: rgba(7,18,37,.7); border: 1px solid var(--line);
+  }
+  .stat-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 14px; }
+  .team-stat {
+    padding: 12px; border-radius: 16px; background: rgba(8,16,31,.38); border: 1px solid rgba(255,255,255,.06);
+  }
+  .team-stat .k { color: var(--muted); font-size: 11px; text-transform: uppercase; letter-spacing: .09em; }
+  .team-stat .v { margin-top: 6px; font-weight: 800; font-size: 20px; }
+  .member-list { margin-top: 14px; display: grid; gap: 8px; }
+  .member {
+    display: grid; grid-template-columns: 72px 1.5fr repeat(3, .8fr) .8fr; gap: 10px; align-items: center;
+    padding: 10px 12px; border-radius: 14px; background: rgba(7,17,33,.36); border: 1px solid rgba(255,255,255,.05);
+    font-size: 14px;
+  }
+  .member .name { font-weight: 700; }
+  .muted { color: var(--muted); }
+  .up { color: var(--good); font-weight: 800; }
+  .down { color: var(--bad); font-weight: 800; }
+  .neutral { color: var(--muted); font-weight: 700; }
+  .toolbar {
+    display: flex; gap: 10px; flex-wrap: wrap; align-items: center; margin-bottom: 10px;
+  }
+  .toolbar input, .toolbar select {
+    min-height: 42px; border-radius: 12px; border: 1px solid var(--line); background: rgba(8,16,31,.7);
+    color: var(--text); padding: 0 12px; font: inherit;
+  }
+  .toolbar-note { color: var(--muted); font-size: 13px; margin-bottom: 14px; }
+  .table-shell {
+    overflow: auto; border: 1px solid var(--line); border-radius: 18px; background: rgba(8,16,31,.42);
+  }
+  table { width: 100%; border-collapse: collapse; min-width: 1120px; }
+  thead th {
+    position: sticky; top: 0; background: rgba(14,27,50,.98); z-index: 1;
+    text-align: left; padding: 12px 10px; font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: .09em; border-bottom: 1px solid var(--line);
+  }
+  tbody td { padding: 11px 10px; border-bottom: 1px solid rgba(255,255,255,.04); vertical-align: middle; }
+  tbody tr:hover { background: rgba(255,255,255,.025); }
+  .player-cell {
+    display: flex; align-items: center; gap: 10px; font-weight: 700;
+  }
+  .player-trigger {
+    display:flex; align-items:center; gap:10px; width:100%;
+    background: transparent; color: var(--text); border:0; padding:0; margin:0;
+    font: inherit; cursor:pointer; text-align:left;
+  }
+  .player-trigger:hover { color: #cfe2ff; }
+  .dot {
+    width: 12px; height: 12px; border-radius: 999px; display: inline-block; flex: 0 0 auto;
+    box-shadow: 0 0 0 3px rgba(255,255,255,.06);
+  }
+  .pill {
+    display:inline-flex; align-items:center; gap:6px; padding:5px 8px; border-radius:999px;
+    background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.07); font-size:12px; font-weight:700;
+  }
+  .kpis { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
+  .kpi { border: 1px solid var(--line); border-radius: 18px; padding: 14px 15px; background: rgba(11,22,41,.58); }
+  .kpi .eyebrow { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: .09em; }
+  .kpi .headline { margin-top: 8px; font-weight: 800; font-size: 20px; }
+  .kpi .detail { margin-top: 6px; color: var(--muted); font-size: 13px; }
+  .chart-card { border: 1px solid var(--line); border-radius: 20px; background: rgba(10,20,38,.55); padding: 16px; }
+  .chart-title { font-size: 16px; font-weight: 800; margin-bottom: 12px; }
+  .bar-list { display: grid; gap: 10px; }
+  .bar-row { display: grid; grid-template-columns: minmax(120px, 180px) 1fr auto; gap: 10px; align-items: center; }
+  .bar-rail { height: 14px; border-radius: 999px; background: rgba(255,255,255,.06); overflow: hidden; position: relative; }
+  .bar-fill { height: 100%; border-radius: 999px; }
+  svg.scatter {
+    width: 100%; height: 340px; background: radial-gradient(circle at top, rgba(122,184,255,.08), transparent 55%), rgba(7,16,31,.52);
+    border-radius: 14px; border: 1px solid rgba(255,255,255,.05);
+  }
+  .legend { margin-top: 10px; display: flex; gap: 12px; flex-wrap: wrap; color: var(--muted); font-size: 12px; }
+  .legend span { display: inline-flex; align-items: center; gap: 6px; }
+  .drawer-backdrop {
+    position: fixed; inset: 0; background: rgba(2,8,18,.64); backdrop-filter: blur(3px);
+    opacity: 0; pointer-events: none; transition: opacity .2s ease; z-index: 30;
+  }
+  .drawer-backdrop.open { opacity: 1; pointer-events: auto; }
+  .item-drawer {
+    position: fixed; top: 0; right: 0; height: 100vh; width: min(520px, 100vw);
+    background: linear-gradient(180deg, rgba(15,28,53,.98), rgba(8,17,34,.98));
+    border-left: 1px solid var(--line);
+    box-shadow: -24px 0 50px rgba(0,0,0,.35);
+    transform: translateX(102%);
+    transition: transform .22s ease;
+    z-index: 31; display: flex; flex-direction: column;
+  }
+  .item-drawer.open { transform: translateX(0); }
+  .drawer-head {
+    padding: 18px 18px 14px; border-bottom: 1px solid var(--line); display:flex; gap:14px; justify-content:space-between; align-items:flex-start;
+  }
+  .drawer-head p { margin: 8px 0 0; color: var(--muted); line-height: 1.45; font-size: 13px; }
+  .icon-btn {
+    appearance:none; border:1px solid var(--line); background: rgba(7,18,34,.72); color: var(--text);
+    width: 40px; height: 40px; border-radius: 12px; cursor:pointer; font-size: 18px; line-height: 1;
+  }
+  .drawer-body { padding: 18px; overflow: auto; display:grid; gap:16px; }
+  .drawer-metrics { display:grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; }
+  .drawer-metric {
+    border: 1px solid var(--line); border-radius: 16px; padding: 12px; background: rgba(8,16,31,.38);
+  }
+  .drawer-metric .k { color: var(--muted); font-size: 11px; text-transform: uppercase; letter-spacing: .08em; }
+  .drawer-metric .v { margin-top: 6px; font-size: 20px; font-weight: 800; }
+  .chip-row { display:flex; flex-wrap: wrap; gap: 8px; }
+  .chip {
+    display:inline-flex; align-items:center; gap:6px; padding:6px 10px; border-radius:999px;
+    background: rgba(255,255,255,.05); border:1px solid rgba(255,255,255,.08); color: var(--text); font-size: 12px; font-weight: 700;
+  }
+  .tile-grid { display:grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+  .tile-card {
+    display:grid; grid-template-columns: 72px 1fr; gap: 12px; align-items: start;
+    padding: 12px; border-radius: 18px; border: 1px solid rgba(255,255,255,.08);
+    background: rgba(8,16,31,.42); color: inherit; text-decoration: none;
+  }
+  .tile-card:hover { border-color: rgba(173,197,255,.28); transform: translateY(-1px); }
+  .tile-thumb {
+    width:72px; height:72px; border-radius:16px; overflow:hidden; background: rgba(255,255,255,.05);
+    border:1px solid rgba(255,255,255,.06); position:relative; display:grid; place-items:center;
+  }
+  .tile-thumb img { width:100%; height:100%; object-fit:cover; display:block; }
+  .tile-thumb .fallback {
+    display:none; width:100%; height:100%; place-items:center; font-weight:900; font-size:24px; color:#d7e6ff;
+    background: linear-gradient(180deg, rgba(61,136,235,.35), rgba(15,24,45,.2));
+  }
+  .tile-title { font-weight: 800; line-height: 1.35; padding-right: 34px; }
+  .tile-meta { margin-top: 6px; color: var(--muted); font-size: 12px; }
+  .tile-stats { margin-top: 8px; display:flex; gap:8px; flex-wrap: wrap; }
+  .tile-badge {
+    position:absolute; top:8px; right:8px; min-width: 30px; height: 28px; padding: 0 8px;
+    display:grid; place-items:center; border-radius: 999px; font-size: 12px; font-weight: 800;
+    background: rgba(7,18,37,.9); border: 1px solid rgba(255,255,255,.08);
+  }
+  .empty-state {
+    border:1px dashed rgba(255,255,255,.15); border-radius: 18px; padding: 18px; color: var(--muted);
+    background: rgba(8,16,31,.32);
+  }
+  @media (max-width: 1180px) {
+    .metric-grid { grid-template-columns: repeat(3, minmax(0,1fr)); }
+    .grid-3, .grid-2, .kpis { grid-template-columns: 1fr; }
+  }
+  @media (max-width: 760px) {
+    body { padding: 14px; }
+    .metric-grid { grid-template-columns: repeat(2, minmax(0,1fr)); }
+    .member { grid-template-columns: 72px 1fr 70px; }
+    .member .hide-sm { display:none; }
+    .drawer-metrics { grid-template-columns: repeat(2, minmax(0,1fr)); }
+    .tile-grid { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <section class="hero">
+    <div class="hero-top">
+      <div class="title-block">
+        <h1>Bingo Draft + Results Combined Overall Stats</h1>
+        <p>
+          One combined dashboard that merges your bingo save stats with the draft board and the pre/post Wise Old Man snapshot rankings.
+          Click a player name in the leaderboard to open a visual item drawer showing the tiles they claimed.
+        </p>
+      </div>
+      <div class="action-row">
+        <label class="btn">
+          Load save JSON
+          <input type="file" id="saveInput" accept=".json,application/json" />
+        </label>
+        <button class="btn" id="resetBtn" type="button">Reset to embedded save</button>
+      </div>
+    </div>
+    <div class="subnote" id="statusLine">Using embedded snapshot from clanEventTool_save_fixed_v137.json.</div>
+    <div class="metric-grid" id="topMetrics"></div>
+  </section>
+
+  <details class="panel" open>
+    <summary>
+      <span>Quick Movers + Draft Value</span>
+      <span class="hint">fast overview</span>
+    </summary>
+    <div class="panel-body">
+      <div class="kpis" id="moverKpis"></div>
+      <div class="callout small">
+        Rank swing is based on the provided pre-bingo OVR ordering versus the provided post-bingo OVR ordering.
+        Positive swing means a player finished higher on the post-bingo board than they started on the pre-bingo board.
+      </div>
+    </div>
+  </details>
+
+  <details class="panel" open>
+    <summary>
+      <span>Teams</span>
+      <span class="hint">draft board + bingo output</span>
+    </summary>
+    <div class="panel-body">
+      <p class="section-note">
+        Each team card keeps the draft position visible next to the save-file production metrics so you can see who over-delivered,
+        who held seed, and how each captain's roster actually paid off.
+      </p>
+      <div class="grid-3" id="teamCards"></div>
+    </div>
+  </details>
+
+  <details class="panel" open>
+    <summary>
+      <span>Player Leaderboard</span>
+      <span class="hint">search / filter / click for items</span>
+    </summary>
+    <div class="panel-body">
+      <div class="toolbar">
+        <input id="searchBox" placeholder="Search player" />
+        <select id="teamFilter">
+          <option value="all">All teams</option>
+        </select>
+        <select id="sortSelect">
+          <option value="postRank">Post rank</option>
+          <option value="points">Points</option>
+          <option value="gp">GP</option>
+          <option value="claims">Claims</option>
+          <option value="uniqueClaims">Unique tiles</option>
+          <option value="draftPick">Draft pick</option>
+          <option value="deltaOvr">OVR delta</option>
+          <option value="rankSwing">Rank swing</option>
+          <option value="ehb">EHB gained</option>
+          <option value="ehp">EHP gained</option>
+        </select>
+      </div>
+      <div class="toolbar-note">Click a player name to open their claimed-item icon list. Repeated items are grouped with an xN badge.</div>
+      <div class="table-shell">
+        <table>
+          <thead>
+            <tr>
+              <th>Post</th>
+              <th>Δ Rank</th>
+              <th>Draft</th>
+              <th>Player</th>
+              <th>Team</th>
+              <th>Pre OVR</th>
+              <th>Post OVR</th>
+              <th>Δ OVR</th>
+              <th>Points</th>
+              <th>GP</th>
+              <th>Claims</th>
+              <th>Unique Tiles</th>
+              <th>EHB</th>
+              <th>EHP</th>
+            </tr>
+          </thead>
+          <tbody id="playerTbody"></tbody>
+        </table>
+      </div>
+    </div>
+  </details>
+
+  <details class="panel" open>
+    <summary>
+      <span>Visuals</span>
+      <span class="hint">team trends + pick efficiency</span>
+    </summary>
+    <div class="panel-body">
+      <div class="grid-2">
+        <div class="chart-card">
+          <div class="chart-title">Team Average OVR: Pre vs Post</div>
+          <div id="teamAvgChart"></div>
+        </div>
+        <div class="chart-card">
+          <div class="chart-title">Team Totals</div>
+          <div id="teamTotalsChart"></div>
+        </div>
+        <div class="chart-card">
+          <div class="chart-title">Biggest OVR Movers</div>
+          <div id="deltaChart"></div>
+        </div>
+        <div class="chart-card">
+          <div class="chart-title">Draft Pick vs Bingo Points</div>
+          <div id="pickPointsScatter"></div>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <details class="panel">
+    <summary>
+      <span>Method / Assumptions</span>
+      <span class="hint">how the page is built</span>
+    </summary>
+    <div class="panel-body">
+      <div class="callout">
+        <strong>What comes from the save:</strong> team assignment, points, GP, replay claim counts, unique tile counts, claimed tile icons/details, combat level, total level, and Wise Old Man EHP/EHB gains when present.<br><br>
+        <strong>What comes from the screenshots:</strong> draft pick order, pre-bingo OVR, and post-bingo OVR / overall ordering.<br><br>
+        <strong>Pre rank tie-break:</strong> when two players share the same pre-bingo OVR, this page breaks ties alphabetically so rank movement stays deterministic.
+      </div>
+    </div>
+  </details>
+</div>
+
+<div class="drawer-backdrop" id="drawerBackdrop"></div>
+<aside class="item-drawer" id="itemDrawer" aria-hidden="true">
+  <div class="drawer-head">
+    <div>
+      <h2 id="drawerTitle">Claimed items</h2>
+      <p id="drawerSubtitle">Click a player name in the table to inspect their tiles.</p>
+    </div>
+    <button class="icon-btn" id="drawerClose" type="button" aria-label="Close">×</button>
+  </div>
+  <div class="drawer-body" id="drawerBody">
+    <div class="empty-state">No player selected yet.</div>
+  </div>
+</aside>
+
+<script>
+const DRAFT_META = {"lunarthecat": {"displayName": "LunarTheCat", "draftPick": null, "preOvr": 98, "postOvr": 99, "postRank": 3}, "pinged": {"displayName": "Pinged", "draftPick": 19, "preOvr": 78, "postOvr": 82, "postRank": 20}, "alwaysplankn": {"displayName": "alwaysplankn", "draftPick": 18, "preOvr": 88, "postOvr": 88, "postRank": 13}, "clored": {"displayName": "clored", "draftPick": 7, "preOvr": 83, "postOvr": 81, "postRank": 21}, "comonproject": {"displayName": "ComonProject", "draftPick": 12, "preOvr": 81, "postOvr": 82, "postRank": 19}, "laws": {"displayName": "L aws", "draftPick": 1, "preOvr": 99, "postOvr": 99, "postRank": 2}, "shazzzzzy": {"displayName": "Shazzzzzy", "draftPick": 25, "preOvr": 68, "postOvr": 70, "postRank": 28}, "throattity": {"displayName": "Throat_Tity", "draftPick": 6, "preOvr": 93, "postOvr": 93, "postRank": 7}, "xviilxxvi": {"displayName": "XVII LXXVI", "draftPick": 24, "preOvr": 77, "postOvr": 78, "postRank": 23}, "yalet0wn": {"displayName": "Yalet0wn", "draftPick": 13, "preOvr": 86, "postOvr": 86, "postRank": 15}, "99broke": {"displayName": "99Broke", "draftPick": null, "preOvr": 97, "postOvr": 97, "postRank": 4}, "dcma8r": {"displayName": "dc ma8r", "draftPick": 23, "preOvr": 75, "postOvr": 74, "postRank": 27}, "dcstepnegro": {"displayName": "DcStepNegro", "draftPick": 11, "preOvr": 83, "postOvr": 83, "postRank": 18}, "dutcharb": {"displayName": "dutch arb", "draftPick": 14, "preOvr": 93, "postOvr": 93, "postRank": 6}, "harynuhtsac": {"displayName": "hary nuhtsac", "draftPick": 17, "preOvr": 90, "postOvr": 90, "postRank": 10}, "huzmirk": {"displayName": "Huzmirk", "draftPick": 5, "preOvr": 99, "postOvr": 99, "postRank": 1}, "lailipop": {"displayName": "lailipop", "draftPick": 26, "preOvr": 72, "postOvr": 76, "postRank": 25}, "mrsamer": {"displayName": "Mr Samer", "draftPick": 2, "preOvr": 93, "postOvr": 94, "postRank": 5}, "ncdj7": {"displayName": "NCDJ 7", "draftPick": 8, "preOvr": 84, "postOvr": 83, "postRank": 17}, "rhedeem": {"displayName": "Rhedeem", "draftPick": 20, "preOvr": 83, "postOvr": 83, "postRank": 16}, "bearl": {"displayName": "Bear L", "draftPick": null, "preOvr": 91, "postOvr": 90, "postRank": 9}, "aeyriev": {"displayName": "aeyrie v", "draftPick": 16, "preOvr": 76, "postOvr": 77, "postRank": 24}, "darkcondoms": {"displayName": "Dark Condoms", "draftPick": 15, "preOvr": 89, "postOvr": 89, "postRank": 11}, "invadeherzim": {"displayName": "invadeherzim", "draftPick": 21, "preOvr": 71, "postOvr": 79, "postRank": 22}, "jennifer": {"displayName": "J ennifer", "draftPick": 10, "preOvr": 76, "postOvr": 75, "postRank": 26}, "letha1nox": {"displayName": "Letha1Nox", "draftPick": 22, "preOvr": 64, "postOvr": 64, "postRank": 30}, "moondancer": {"displayName": "Moondancer", "draftPick": 4, "preOvr": 86, "postOvr": 86, "postRank": 14}, "sto3pt3g3l": {"displayName": "sto3pt3g3l", "draftPick": 27, "preOvr": 68, "postOvr": 70, "postRank": 29}, "toopro4dc": {"displayName": "Toopro4DC", "draftPick": 9, "preOvr": 92, "postOvr": 92, "postRank": 8}, "uncled863": {"displayName": "uncled863", "draftPick": 3, "preOvr": 89, "postOvr": 88, "postRank": 12}};
+const DEFAULT_DATA = {"sourceFile": "clanEventTool_save_fixed_v137.json", "eventWindow": {"start": "2026-03-24T07:50:15.655Z", "end": "2026-04-06T20:51:40.020Z"}, "totals": {"players": 30, "teams": 3, "claims": 216, "points": 216, "gp": 2062055818, "ehp": 115.12, "ehb": 452.03}, "players": [{"key": "huzmirk", "displayName": "Huzmirk", "team": "Team 2", "teamColor": "#e60017", "isCaptain": false, "draftPick": 5, "preOvr": 99, "postOvr": 99, "preRank": 1, "postRank": 1, "rankSwing": 0, "deltaOvr": 0, "points": 3, "gp": 12988532, "claims": 3, "uniqueClaims": 3, "ehp": 5.90818, "ehb": 8.31913, "combat": 126, "totalLevel": 2285, "tiles": [{"tileKey": "1774695484882", "taskId": 1774695484882, "name": "Noxious halberd piece", "image": "https://oldschool.runescape.wiki/images/thumb/Noxious_halberd_detail.png/240px-Noxious_halberd_detail.png?fa0de", "category": "Loot Drop", "categories": ["Loot Drop", "Untradeable", "Bossing"], "difficulty": "Easy", "wikiURL": "https://oldschool.runescape.wiki/w/Noxious_halberd", "count": 1, "totalGp": 10000000, "totalPoints": 1, "firstClaimAt": 1774424820000, "lastClaimAt": 1774424820000}, {"tileKey": "1746046754866", "taskId": 1746046754866, "name": "Enhanced crystal teleport seed", "image": "https://oldschool.runescape.wiki/images/thumb/Enhanced_crystal_teleport_seed_detail.png/240px-Enhanced_crystal_teleport_seed_detail.png?84d93", "category": "Combat", "categories": ["Combat"], "difficulty": "Easy", "wikiURL": "https://oldschool.runescape.wiki/w/Enhanced_crystal_teleport_seed", "count": 1, "totalGp": 2910808, "totalPoints": 1, "firstClaimAt": 1774423740000, "lastClaimAt": 1774423740000}, {"tileKey": "24", "taskId": 24, "name": "Jar of chemicals", "image": "https://oldschool.runescape.wiki/images/thumb/Jar_of_chemicals_detail.png/240px-Jar_of_chemicals_detail.png?7bdc6", "category": "Other", "categories": ["Other", "Loot Drop", "Bossing", "Slayer"], "difficulty": "Medium", "wikiURL": "https://oldschool.runescape.wiki/w/Jar_of_chemicals", "count": 1, "totalGp": 77724, "totalPoints": 1, "firstClaimAt": 1775290380000, "lastClaimAt": 1775290380000}], "pointsRank": 20, "draftValue": -15, "gpPerClaim": 4329510.67, "pointsPerClaim": 1.0}, {"key": "laws", "displayName": "L aws", "team": "Team 1", "teamColor": "#3d88eb", "isCaptain": false, "draftPick": 1, "preOvr": 99, "postOvr": 99, "preRank": 2, "postRank": 2, "rankSwing": 0, "deltaOvr": 0, "points": 11, "gp": 180352456, "claims": 11, "uniqueClaims": 11, "ehp": 5.2711, "ehb": 15.07683, "combat": 126, "totalLevel": 2108, "tiles": [{"tileKey": "1773472004135", "taskId": 1773472004135, "name": "Oathplate armour set", "image": "https://oldschool.runescape.wiki/images/thumb/Oathplate_armour_set_detail.png/240px-Oathplate_armour_set_detail.png?d9c8f", "category": "Combat", "categories": ["Combat"], "difficulty": "Easy", "wikiURL": "https://oldschool.runescape.wiki/w/Oathplate_armour_set", "count": 1, "totalGp": 88400000, "totalPoints": 1, "firstClaimAt": 1774872720000, "lastClaimAt": 1774872720000}, {"tileKey": "1746046184183", "taskId": 1746046184183, "name": "Dexterous prayer scroll", "image": "https://oldschool.runescape.wiki/images/thumb/Dexterous_prayer_scroll_detail.png/240px-Dexterous_prayer_scroll_detail.png?d6a6b", "category": "Combat", "categories": ["Combat", "Loot Drop", "Raids"], "difficulty": "Easy", "wikiURL": "https://oldschool.runescape.wiki/w/Dexterous_prayer_scroll", "count": 1, "totalGp": 19353609, "totalPoints": 1, "firstClaimAt": 1775293020000, "lastClaimAt": 1775293020000}, {"tileKey": "1741641560248", "taskId": 1741641560248, "name": "Bandos tassets", "image": "https://oldschool.runescape.wiki/images/thumb/Bandos_tassets_detail.png/240px-Bandos_tassets_detail.png?abaeb", "category": "Gear", "categories": ["Gear"], "difficulty": "Easy", "wikiURL": "https://oldschool.runescape.wiki/w/Bandos_tassets", "count": 1, "totalGp": 16000000, "totalPoints": 1, "firstClaimAt": 1774588440000, "lastClaimAt": 1774588440000}, {"tileKey": "1743447328015", "taskId": 1743447328015, "name": "Twisted buckler", "image": "https://oldschool.runescape.wiki/images/thumb/Twisted_buckler_detail.png/240px-Twisted_buckler_detail.png?75ade", "category": "Gear", "categories": ["Gear"], "difficulty": "Easy", "wikiURL": "https://oldschool.runescape.wiki/w/Twisted_buckler", "count": 1, "totalGp": 14668086, "totalPoints": 1, "firstClaimAt": 1775212620000, "lastClaimAt": 1775212620000}, {"tileKey": "1746047534047", "taskId": 1746047534047, "name": "Hydra leather", "image": "https://oldschool.runescape.wiki/images/thumb/Hydra_leather_detail.png/240px-Hydra_leather_detail.png?6a2a6", "category": "Combat", "categories": ["Combat"], "difficulty": "Easy", "wikiURL": "https://oldschool.runescape.wiki/w/Hydra_leather", "count": 1, "totalGp": 14539229, "totalPoints": 1, "firstClaimAt": 1774652460000, "lastClaimAt": 1774652460000}, {"tileKey": "1774695484882", "taskId": 1774695484882, "name": "Noxious halberd piece", "image": "https://oldschool.runescape.wiki/images/thumb/Noxious_halberd_detail.png/240px-Noxious_halberd_detail.png?fa0de", "category": "Loot Drop", "categories": ["Loot Drop", "Untradeable", "Bossing"], "difficulty": "Easy", "wikiURL": "https://oldschool.runescape.wiki/w/Noxious_halberd", "count": 1, "totalGp": 10000000, "totalPoints": 1, "firstClaimAt": 1774313700000, "lastClaimAt": 1774313700000}, {"tileKey": "1743455471530", "taskId": 1743455471530, "name": "Armadyl helmet", "image": "https://oldschool.runescape.wiki/images/thumb/Armadyl_helmet_detail.png/240px-Armadyl_helmet_detail.png?8793d", "category": "Gear", "categories": ["Gear"], "difficulty": "Easy", "wikiURL": "https://oldschool.runescape.wiki/w/Armadyl_helmet", "count": 1, "totalGp": 9137166, "totalPoints": 1, "firstClaimAt": 1775389020000, "lastClaimAt": 1775389020000}, {"tileKey": "1740013489615", "taskId": 1740013489615, "name": "Lightbearer", "image": "https://oldschool.runescape.wiki/images/thumb/Lightbearer_detail.png/240px-Lightbearer_detail.png?3576d", "category": "Gear", "categories": ["Gear"], "difficulty": "Easy", "wikiURL": "https://oldschool.runescape.wiki/w/Lightbearer", "count": 1, "totalGp": 4922054, "totalPoints": 1, "firstClaimAt": 1774310640000, "lastClaimAt": 1774310640000}, {"tileKey": "1740013539457", "taskId": 1740013539457, "name": "Berserker ring", "image": "https://oldschool.runescape.wiki/images/thumb/Berserker_ring_detail.png/240px-Berserker_ring_detail.png?81f8b", "category": "Gear", "categories": ["Gear"], "difficulty": "Easy", "wikiURL": "https://oldschool.runescape.wiki/w/Berserker_ring", "count": 1, "totalGp": 3219000, "totalPoints": 1, "firstClaimAt": 1774492260000, "lastClaimAt": 1774492260000}, {"tileKey": "1746048628787", "taskId": 1746048628787, "name": "Shadow quartz", "image": "https://oldschool.runescape.wiki/images/thumb/Shadow_quartz_detail.png/240px-Shadow_quartz_detail.png?b410d", "category": "Combat", "categories": ["Combat"], "difficulty": "Easy", "wikiURL": "https://oldschool.runescape.wiki/w/Shadow_quartz", "count": 1, "totalGp": 60000, "totalPoints": 1, "firstClaimAt": 1774483260000, "lastClaimAt": 1774483260000}, {"tileKey": "1773472724610", "taskId": 1773472724610, "name": "Claws of callisto", "image": "https://oldschool.runescape.wiki/images/thumb/Claws_of_callisto_detail.png/240px-Claws_of_callisto_detail.png?bb22e", "category": "Combat", "categories": ["Combat"], "difficulty": "Easy", "wikiURL": "https://oldschool.runescape.wiki/w/Claws_of_callisto", "count": 1, "totalGp": 53312, "totalPoints": 1, "firstClaimAt": 1774324620000, "lastClaimAt": 1774324620000}], "pointsRank": 4, "draftValue": -3, "gpPerClaim": 16395677.82, "pointsPerClaim": 1.0}, {"key": "lunarthecat", "displayName": "LunarTheCat", "team": "Team 1", "teamColor": "#3d88eb", "isCaptain": true, "draftPick": null, "preOvr": 98, "postOvr": 99, "preRank": 3, "postRank": 3, "rankSwing": 0, "deltaOvr": 1, "points": 12, "gp": 339237294, "claims": 12, "uniqueClaims": 12, "ehp": 8.54825, "ehb": 37.50077, "combat": 126, "totalLevel": 2229, "tiles": [{"tileKey": "1746048437831", "taskId": 1746048437831, "name": "Ultor vestige", "image": "https://oldschool.runescape.wiki/images/thumb/Ultor_vestige_detail.png/240px-Ultor_vestige_detail.png?99817", "category": "Combat", "categories": ["Combat"], "difficulty": "Easy", "wikiURL": "https://oldschool.runescape.wiki/w/Ultor_vestige", "count": 1, "totalGp": 132288847, "totalPoints": 1, "firstClaimAt": 1775261880000, "lastClaimAt": 1775261880000}, {"tileKey": "1773470905962", "taskId": 1773470905962, "name": "Ancestral robes set", "image": "https://oldschool.runescape.wiki/images/thumb/Ancestral_robes_set_detail.png/240px-Ancestral_robes_set_detail.png?e97a1", "category": "Combat", "categories": ["Combat"], "difficulty": "Easy", "wikiURL": "https://oldschool.runescape.wiki/w/Ancestral_robes_set", "count": 1, "totalGp": 125000000, "totalPoints": 1, "firstClaimAt": 1775110560000, "lastClaimAt": 1775110560000}, {"tileKey": "1773471962553", "taskId": 1773471962553, "name": "Virtus armour set", "image": "https://oldschool.runescape.wiki/images/thumb/Virtus_armour_set_detail.png/240px-Virtus_armour_set_detail.png?6a88e", "category": "Combat", "categories": ["Combat"], "difficulty": "Easy", "wikiURL": "https://oldschool.runescape.wiki/w/Virtus_armour_set", "count": 1, "totalGp": 45417921, "totalPoints": 1, "firstClaimAt": 1774907040000, "lastClaimAt": 1774907040000}, {"tileKey": "1741641640291", "taskId": 1741641640291, "name": "Zenyte shard", "image": "https://oldschool.runescape.wiki/images/thumb/Zenyte_shard_detail.png/240px-Zenyte_shard_detail.png?c5a63", "category": "Combat", "categories": ["Combat", "Loot Drop", "Bossing"], "difficulty": "Easy", "wikiURL": "https://oldschool.runescape.wiki/w/Zenyte_shard", "count": 1, "totalGp": 17187000, "totalPoints": 1, "firstClaimAt": 1774919280000, "lastClaimAt": 1774919280000}, {"tileKey": "1742322316530", "taskId": 1742322316530, "name": "Dinh's bulwark", "image": "https://oldschool.runescape.wiki/images/thumb/Dinh%27s_bulwark_detail.png/240px-Dinh%27s_bulwark_detail.png?78ba5", "category": "Gear", "categories": ["Gear"], "difficulty": "Easy", "wikiURL": "https://oldschool.runescape.wiki/w/Dinh%27s_bulwark", "count": 1, "totalGp": 13779392, "totalPoints": 1, "firstClaimAt": 1774863600000, "lastClaimAt": 1774863600000}, {"tileKey": "1742320407448", "taskId": 1742320407448, "name": "Aranea boots", "image": "https://oldschool.runescape.wiki/images/thumb/Aranea_boots_detail.png/240px-Aranea_boots_detail.png?43deb", "category": "Gear", "categories": ["Gear"], "difficulty": "Easy", "wikiURL": "https://oldschool.runescape.wiki/w/Aranea_boots", "count": 1, "totalGp": 2543981, "totalPoints": 1, "firstClaimAt": 1774666860000, "lastClaimAt": 1774666860000}, {"tileKey": "26", "taskId": 26, "name": "Hill giant club", "image": "https://oldschool.runescape.wiki/images/thumb/Hill_giant_club_detail.png/240px-Hill_giant_club_detail.png?53073", "category": "Gear", "categories": ["Gear"], "difficulty": "Easy", "wikiURL": "https://oldschool.runescape.wiki/w/Hill_giant_club", "count": 1, "totalGp": 1215767, "totalPoints": 1, "firstClaimAt": 1774644960000, "lastClaimAt": 1774644960000}, {"tileKey": "1743457342463", "taskId": 1743457342463, "name": "Tome of fire", "image": "https://oldschool.runescape.wiki/images/thumb/Tome_of_fire_%28empty%29_detail.png/240px-Tome_of_fire_%28empty%29_detail.png?b9bae", "category": "Gear", "categories": ["Gear"], "difficulty": "Easy", "wikiURL": "https://oldschool.runescape.wiki/w/Tome_of_fire#Charged", "count": 1, "totalGp": 866306, "totalPoints": 1, "firstClaimAt": 1775336880000, "lastClaimAt": 1775336880000}, {"tileKey": "1741302452640", "taskId": 1741302452640, "name": "Occult necklace", "image": "https://oldschool.runescape.wiki/images/thumb/Occult_necklace_detail.png/240px-Occult_necklace_detail.png?08adc", "category": "Gear", "categories": ["Gear"], "difficulty": "Easy", "wikiURL": "https://oldschool.runescape.wiki/w/Occult_necklace", "count": 1, "totalGp": 440593, "totalPoints": 1, "firstClaimAt": 1775300340000, "lastClaimAt": 1775300340000}, {"tileKey": "1743457416620", "taskId": 1743457416620, "name": "Tome of water", "image": "https://oldschool.runescape.wiki/images/thumb/Tome_of_water_%28empty%29_detail.png/240px-Tome_of_water_%28empty%29_detail.png?2502c", "category": "Gear", "categories": ["Gear"], "difficulty": "Easy", "wikiURL": "https://oldschool.runescape.wiki/w/Tome_of_water#Charged", "count": 1, "totalGp": 407487, "totalPoints": 1, "firstClaimAt": 1775166780000, "lastClaimAt": 1775166780000}, {"tileKey": "1746048611346", "taskId": 1746048611346, "name": "Blood quartz", "image": "https://oldschool.runescape.wiki/images/thumb/Blood_quartz_detail.png/240px-Blood_quartz_detail.png?b410d", "category": "Combat", "categories": ["Combat"], "difficulty": "Easy", "wikiURL": "https://oldschool.runescape.wiki/w/Blood_quartz", "count": 1, "totalGp": 60000, "totalPoints": 1, "firstClaimAt": 1775261220000, "lastClaimAt": 1775261220000}, {"tileKey": "1746048481397", "taskId": 1746048481397, "name": "Eye of the duke", "image": "https://oldschool.runescape.wiki/images/thumb/Eye_of_the_duke_detail.png/240px-Eye_of_the_duke_detail.png?99817", "category": "Combat", "categories": ["Combat"], "difficulty": "Easy", "wikiURL": "https://oldschool.runescape.wiki/w/Eye_of_the_duke", "count": 1, "totalGp": 30000, "totalPoints": 1, "firstClaimAt": 1774916160000, "lastClaimAt": 1774916160000}], "pointsRank": null, "draftValue": null, "gpPerClaim": 28269774.5, "pointsPerClaim": 1.0}, {"key": "99broke", "displayName": "99Broke", "team": "Team 2", "teamColor": "#e60017", "isCaptain": true, "draftPick": null, "preOvr": 97, "postOvr": 97, "preRank": 4, "postRank": 4, "rankSwing": 0, "deltaOvr": 0, "points": 14, "gp": 249783161, "claims": 14, "uniqueClaims": 14, "ehp": 2.44806, "ehb": 54.39287, "combat": 126, "totalLevel": 2194, "tiles": [{"tileKey": "1746045215277", "taskId": 1746045215277, "name": "Zaryte vambraces", "image": "https://oldschool.runescape.wiki/images/thumb/Zaryte_vambraces_detail.png/240px-Zaryte_vambraces_detail.png?fdfe1", "category": "Gear", "categories": ["Gear"], "difficulty": "Easy", "wikiURL": "https://oldschool.runescape.wiki/w/Zaryte_vambraces", "count": 1, "totalGp": 79690620, "totalPoints": 1, "firstClaimAt": 1775190840000, "lastClaimAt": 1775190840000}, {"tileKey": "1742322595210", "taskId": 1742322595210, "name": "Dragon claws", "image": "https://oldschool.runescape.wiki/images/thumb/Dragon_claws_detail.png/240px-Dragon_claws_detail.png?bdc25", "category": "Gear", "categories": ["Gear"], "difficulty": "Easy", "wikiURL": "https://oldschool.runescape.wiki/w/Dragon_claws", "count": 1, "totalGp": 42847279, "totalPoints": 1, "firstClaimAt": 1774848960000, "lastClaimAt": 1774848960000}, {"tileKey": "1743455552319", "taskId": 1743455552319, "name": "Armadyl chainskirt", "image": "https://oldschool.runescape.wiki/images/thumb/Armadyl_chainskirt_detail.png/240px-Armadyl_chainskirt_detail.png?9bcc8", "category": "Gear", "categories": ["Gear"], "difficulty": "Easy", "wikiURL": "https://oldschool.runescape.wiki/w/Armadyl_chainskirt", "count": 1, "totalGp": 27600000, "totalPoints": 1, "firstClaimAt": 1775387520000, "lastClaimAt": 1775387520000}, {"tileKey": "1743447594966", "taskId": 1743447594966, "name": "Osmumten's fang", "image": "https://oldschool.runescape.wiki/images/thumb/Osmumten%27s_fang_detail.png/240px-Osmumten%27s_fang_detail.png?fa0de", "category": "Gear", "categories": ["Gear"], "difficulty": "Easy", "wikiURL": "https://oldschool.runescape.wiki/w/Osmumten%27s_fang", "count": 1, "totalGp": 19388681, "totalPoints": 1, "firstClaimAt": 1774482300000, "lastClaimAt": 1774482300000}, {"tileKey": "1773467669297", "taskId": 1773467669297, "name": "Broken dragon hook", "image": "https://oldschool.runescape.wiki/images/thumb/Broken_dragon_hook_detail.png/240px-Broken_dragon_hook_detail.png?6966e", "category": "Combat", "categories": ["Combat"], "difficulty": "Easy", "wikiURL": "https://oldschool.runescape.wiki/w/Broken_dragon_hook", "count": 1, "totalGp": 19245000, "totalPoints": 1, "firstClaimAt": 1775351340000, "lastClaimAt": 1775351340000}, {"tileKey": "1743447328015", "taskId": 1743447328015, "name": "Twisted buckler", "image": "https://oldschool.runescape.wiki/images/thumb/Twisted_buckler_detail.png/240px-Twisted_buckler_detail.png?75ade", "category": "Gear", "categories": ["Gear"], "difficulty": "Easy", "wikiURL": "https://oldschool.runescape.wiki/w/Twisted_buckler", "count": 1, "totalGp": 14668086, "totalPoints": 1, "firstClaimAt": 1774519440000, "lastClaimAt": 1774519440000}, {"tileKey": "1773467710240", "taskId": 1773467710240, "name": "Bottled storm", "image": "https://oldschool.runescape.wiki/images/thumb/Bottled_storm_detail.png/240px-Bottled_storm_detail.png?6fd35", "category": "Combat", "categories": ["Combat"], "difficulty": "Easy", "wikiURL": "https://oldschool.runescape.wiki/w/Bottled_storm", "count": 1, "totalGp": 11000000, "totalPoints": 1, "firstClaimAt": 1775360940000, "lastClaimAt": 1775360940000}, {"tileKey": "1746045661576", "taskId": 1746045661576, "name": "Tanzanite fang", "image": "https://oldschool.runescape.wiki/images/thumb/Tanzanite_fang_detail.png/240px-Tanzanite_fang_detail.png?859ba", "category": "Combat", "categories": ["Combat", "Loot Drop", "Bossing"], "difficulty": "Easy", "wikiURL": "https://oldschool.runescape.wiki/w/Tanzanite_fang", "count": 1, "totalGp": 10725000, "totalPoints": 1, "firstClaimAt": 1774670760000, "lastClaimAt": 1774670760000}, {"tileKey": "1746045268387", "taskId": 1746045268387, "name": "Armadyl hilt", "image": "https://oldschool.runescape.wiki/images/thumb/Armadyl_hilt_detail.png/240px-Armadyl_hilt_detail.png?3b950", "category": "Loot Drop", "categories": ["Loot Drop", "Godwars", "Bossing"], "difficulty": "Easy", "wikiURL": "https://oldschool.runescape.wiki/w/Armadyl_hilt", "count": 1, "totalGp": 7965069, "totalPoints": 1, "firstClaimAt": 1775443200000, "lastClaimAt": 1775443200000}, {"tileKey": "1746046201844", "taskId": 1746046201844, "name": "Arcane prayer scroll", "image": "https://oldschool.runescape.wiki/images/thumb/Arcane_prayer_scroll_detail.png/240px-Arcane_prayer_scroll_detail.png?54108", "category": "Combat", "categories": ["Combat", "Loot Drop", "Raids"], "difficulty": "Easy", "wikiURL": "https://oldschool.runescape.wiki/w/Arcane_prayer_scroll", "count": 1, "totalGp": 4993427, "totalPoints": 1, "firstClaimAt": 1774855020000, "lastClaimAt": 1774855020000}, {"tileKey": "1746058515944", "taskId": 1746058515944, "name": "Echo crystal", "image": "https://oldschool.runescape.wiki/images/thumb/Echo_crystal_detail.png/240px-Echo_crystal_detail.png?3434c", "category": "Combat", "categories": ["Combat"], "difficulty": "Easy", "wikiURL": "https://oldschool.runescape.wiki/w/Echo_crystal", "count": 1, "totalGp": 4175000, "totalPoints": 1, "firstClaimAt": 1774512900000, "lastClaimAt": 1774512900000}, {"tileKey": "1746045673019", "taskId": 1746045673019, "name": "Magic fang", "image": "https://oldschool.runescape.wiki/images/thumb/Magic_fang_detail.png/240px-Magic_fang_detail.png?cd4e3", "category": "Combat", "categories": ["Combat", "Loot Drop", "Barrows"], "difficulty": "Easy", "wikiURL": "https://oldschool.runescape.wiki/w/Magic_fang", "count": 1, "totalGp": 3769999, "totalPoints": 1, "firstClaimAt": 1774603920000, "lastClaimAt": 1774603920000}, {"tileKey": "1746045644034", "taskId": 1746045644034, "name": "Serpentine visage", "image": "https://oldschool.runescape.wiki/images/thumb/Serpentine_visage_detail.png/240px-Serpentine_visage_detail.png?bd940", "category": "Combat", "categories": ["Combat", "Loot Drop", "Bossing"], "difficulty": "Easy", "wikiURL": "https://oldschool.runescape.wiki/w/Serpentine_visage", "count": 1, "totalGp": 3655000, "totalPoints": 1, "firstClaimAt": 1774600860000, "lastClaimAt": 1774600860000}, {"tileKey": "1746048644280", "taskId": 1746048644280, "name": "Smoke quartz", "image": "https://oldschool.runescape.wiki/images/thumb/Smoke_quartz_detail.png/240px-Smoke_quartz_detail.png?99817", "category": "Combat", "categories": ["Combat"], "difficulty": "Easy", "wikiURL": "https://oldschool.runescape.wiki/w/Smoke_quartz", "count": 1, "totalGp": 60000, "totalPoints": 1, "firstClaimAt": 1775037840000, "lastClaimAt": 1775037840000}], "pointsRank": null, "draftValue": null, "gpPerClaim": 17841654.36, "pointsPerClaim": 1.0}, {"key": "mrsamer", "displayName": "Mr Samer", "team": "Team 2", "teamColor": "#e60017", "isCaptain": false, "draftPick": 2, "preOvr": 93, "postOvr": 94, "preRank": 5, "postRank": 5, "rankSwing": 0, "deltaOvr": 1, "points": 19, "gp": 146136318, "claims": 19, "uniqueClaims": 19, "ehp": 2.72773, "ehb": 36.92383, "combat": 126, "totalLevel": 2082, "tiles": [{"tileKey": "1773471962553", "taskId": 1773471962553, "name": "Virtus armour set", "image": "https://oldschool.runescape.wiki/images/thumb/Virtus_armour_set_detail.png/240px-Virtus_armour_set_detail.png?6a88e", "category": "Combat", "categories": ["Combat"], "difficulty": "Easy", "wikiURL": "https://oldschool.runescape.wiki/w/Virtus_armour_set", "count": 1, "totalGp": 45417921, "totalPoints": 1, "firstClaimAt": 1774671360000, "lastClaimAt": 1774671360000}, {"tileKey": "1774504917814", "taskId": 1774504917814, "name": "Armadyl chestplate", "image": "https://oldschool.runescape.wiki/images/thumb/Armadyl_chestplate_detail.png/240px-Armadyl_chestplate_detail.png?78ba5", "category": "Gear", "categories": ["Gear"], "difficulty": "Easy", "wikiURL": "https://oldschool.runescape.wiki/w/Armadyl_chestplate", "count": 1, "totalGp": 37218154, "totalPoints": 1, "firstClaimAt": 1774566720000, "lastClaimAt": 1774566720000}, {"tileKey": "1746046184183", "taskId": 1746046184183, "name": "Dexterous prayer scroll", "image": "https://oldschool.runescape.wiki/images/thumb/Dexterous_prayer_scroll_detail.png/240px-Dexterous_prayer_scroll_detail.png?d6a6b", "category": "Combat", "categories": ["Combat", "Loot Drop", "Raids"], "difficulty": "Easy", "wikiURL": "https://oldschool.runescape.wiki/w/Dexterous_prayer_scroll", "count": 1, "totalGp": 19353609, "totalPoints": 1, "firstClaimAt": 1775005260000, "lastClaimAt": 1775005260000}, {"tileKey": "1746045317556", "taskId": 1746045317556, "name": "Zamorak hilt", "image": "https://oldschool.runescape.wiki/images/thumb/Zamorak_hilt_detail.png/240px-Zamorak_hilt_detail.png?f52af", "category": "Combat", "categories": ["Combat", "Loot Drop", "Godwars", "Bossing"], "difficulty": "Easy", "wikiURL": "https://oldschool.runescape.wiki/w/Zamorak_hilt", "count": 1, "totalGp": 18557810, "totalPoints": 1, "firstClaimAt": 1775075460000, "lastClaimAt": 1775075460000}, {"tileKey": "1741641431615", "taskId": 1741641431615, "name": "Venator shard", "image": "https://oldschool.runescape.wiki/images/thumb/Venator_shard_detail.png/240px-Venator_shard_detail.png?3ad3e", "category": "Loot Drop", "categories": ["Loot Drop", "Bossing"], "difficulty": "Easy", "wikiURL": "https://oldschool.runescape.wiki/w/Venator_shard", "count": 1, "totalGp": 12626663, "totalPoints": 1, "firstClaimAt": 1774561980000, "lastClaimAt": 1774561980000}, {"tileKey": "1746045163636", "taskId": 1746045163636, "name": "Blood shard", "image": "https://oldschool.runescape.wiki/images/thumb/Blood_shard_detail.png/240px-Blood_shard_detail.png?2fbc7", "category": "Skilling", "categories": ["Skilling", "Loot Drop", "Slayer"], "difficulty": "Easy", "wikiURL": "https://oldschool.runescape.wiki/w/Blood_shard", "count": 1, "totalGp": 7800000, "totalPoints": 1, "firstClaimAt": 1774724400000, "lastClaimAt": 1774724400000}, {"tileKey": "1743447230153", "taskId": 1743447230153, "name": "Odium ward", "image": "https://oldschool.runescape.wiki/images/thumb/Odium_ward_detail.png/240px-Odium_ward_detail.png?49661", "category": "Gear", "categories": ["Gear", "Defense Required", "Slot: Off Hand"], "difficulty": "Easy", "wikiURL": "https://oldschool.runescape.wiki/w/Odium_ward", "count": 1, "totalGp": 3525688, "totalPoints": 1, "firstClaimAt": 1774642560000, "lastClaimAt": 1774642560000}, {"tileKey": "1743447494801", "taskId": 1743447494801, "name": "Malediction ward", "image": "https://oldschool.runescape.wiki/images/thumb/Malediction_ward_detail.png/240px-Malediction_ward_detail.png?c708e", "category": "Gear", "categories": ["Gear", "1 Defense", "Slot: Off Hand"], "difficulty": "Easy", "wikiURL": "https://oldschool.runescape.wiki/w/Malediction_ward", "count": 1, "totalGp": 1888648, "totalPoints": 1, "firstClaimAt": 1774400460000, "lastClaimAt": 1774400460000}, {"tileKey": "1773471720211", "taskId": 1773471720211, "name": "Ahrim's armour set", "image": "https://oldschool.runescape.wiki/images/thumb/Ahrim%27s_armour_set_detail.png/240px-Ahrim%27s_armour_set_detail.png?e97a1", "category": "Combat", "categories": ["Combat", "Barrows"], "difficulty": "Easy", "wikiURL": "https://oldschool.runescape.wiki/w/Ahrim%27s_armour_set", "count": 1, "totalGp": 1855747, "totalPoints": 1, "firstClaimAt": 1774503060000, "lastClaimAt": 1774503060000}, {"tileKey": "1741641368176", "taskId": 1741641368176, "name": "Voidwaker blade", "image": "https://oldschool.runescape.wiki/images/thumb/Voidwaker_blade_detail.png/240px-Voidwaker_blade_detail.png?fcc14", "category": "Combat", "categories": ["Combat", "Loot Drop", "Wilderness"], "difficulty": "Easy", "wikiURL": "https://oldschool.runescape.wiki/w/Voidwaker_blade", "count": 1, "totalGp": 1413175, "totalPoints": 1, "firstClaimAt": 1774385400000, "lastClaimAt": 1774385400000}, {"tileKey": "1740013603905", "taskId": 1740013603905, "name": "Seers ring", "image": "https://oldschool.runescape.wiki/images/thumb/Seers_ring_detail.png/240px-Seers_ring_detail.png?c8823", "category": "Gear", "categories": ["Gear"], "difficulty": "Easy", "wikiURL": "https://oldschool.runescape.wiki/w/Seers_ring", "count": 1, "totalGp": 813436, "totalPoints": 1, "firstClaimAt": 1774821840000, "lastClaimAt": 1774821840000}, {"tileKey": "1746128826034", "taskId": 1746128826034, "name": "Dragon limbs", "image": "https://oldschool.runescape.wiki/images/thumb/Dragon_limbs_detail.png/240px-Dragon_limbs_detail.png?e3ed5", "category": "Combat", "categories": ["Combat"], "difficulty": "Easy", "wikiURL": "https://oldschool.runescape.wiki/w/Dragon_limbs", "count": 1, "totalGp": 700000, "totalPoints": 1, "firstClaimAt": 1775247120000, "lastClaimAt": 1775247120000}, {"tileKey": "1743443728212", "taskId": 1743443728212, "name": "Dragon chainbody", "image": "https://oldschool.runescape.wiki/images/thumb/Dragon_chainbody_detail.png/240px-Dragon_chainbody_detail.png?35048", "category": "Gear", "categories": ["Gear"], "difficulty": "Easy", "wikiURL": "https://oldschool.runescape.wiki/w/Dragon_chainbody", "count": 1, "totalGp": 291481, "totalPoints": 1, "firstClaimAt": 1775153280000, "lastClaimAt": 1775153280000}, {"tileKey": "1743455339936", "taskId": 1743455339936, "name": "Tecu salamander", "image": "https://oldschool.runescape.wiki/images/thumb/Tecu_salamander_detail.png/240px-Tecu_salamander_detail.png?50d08", "category": "Gear", "categories": ["Gear"], "difficulty": "Easy", "wikiURL": "https://oldschool.runescape.wiki/w/Tecu_salamander", "count": 1, "totalGp": 280148, "totalPoints": 1, "firstClaimAt": 1774665720000, "lastClaimAt": 1774665720000}, {"tileKey": "1742298244422", "taskId": 1742298244422, "name": "Dragon boots", "image": "https://oldschool.runescape.wiki/images/thumb/Dragon_boots_detail.png/240px-Dragon_boots_detail.png?35048", "category": "Gear", "categories": ["Gear"], "difficulty": "Easy", "wikiURL": "https://oldschool.runescape.wiki/w/Dragon_boots", "count": 1, "totalGp": 262868, "totalPoints": 1, "firstClaimAt": 1774329720000, "lastClaimAt": 1774329720000}, {"tileKey": "1742429789106", "taskId": 1742429789106, "name": "Dragon 2h sword", "image": "https://oldschool.runescape.wiki/images/thumb/Dragon_2h_sword_detail.png/240px-Dragon_2h_sword_detail.png?6ed9d", "category": "Gear", "categories": ["Gear"], "difficulty": "Easy", "wikiURL": "https://oldschool.runescape.wiki/w/Dragon_2h_sword", "count": 1, "totalGp": 131713, "totalPoints": 1, "firstClaimAt": 1774467300000, "lastClaimAt": 1774467300000}, {"tileKey": "1746048611346", "taskId": 1746048611346, "name": "Blood quartz", "image": "https://oldschool.runescape.wiki/images/thumb/Blood_quartz_detail.png/240px-Blood_quartz_detail.png?b410d", "category": "Combat", "categories": ["Combat"], "difficulty": "Easy", "wikiURL": "https://oldschool.runescape.wiki/w/Blood_quartz", "count": 1, "totalGp": 60000, "totalPoints": 1, "firstClaimAt": 1774746360000, "lastClaimAt": 1774746360000}, {"tileKey": "1746048588668", "taskId": 1746048588668, "name": "Ice quartz", "image": "https://oldschool.runescape.wiki/images/thumb/Ice_quartz_detail.png/240px-Ice_quartz_detail.png?99817", "category": "Combat", "categories": ["Combat"], "difficulty": "Easy", "wikiURL": "https://oldschool.runescape.wiki/w/Ice_quartz", "count": 1, "totalGp": 60000, "totalPoints": 1, "firstClaimAt": 1774729440000, "lastClaimAt": 1774729440000}, {"tileKey": "1773472770854", "taskId": 1773472770854, "name": "Skull of vet'ion", "image": "https://oldschool.runescape.wiki/images/thumb/Skull_of_vet%27ion_detail.png/240px-Skull_of_vet%27ion_detail.png?115b4", "category": "Combat", "categories": ["Combat"], "difficulty": "Easy", "wikiURL": "https://oldschool.runescape.wiki/w/Skull_of_vet%27ion", "count": 1, "totalGp": 54999, "totalPoints": 1, "firstClaimAt": 1775339520000, "lastClaimAt": 1775339520000}], "pointsRank": 1, "draftValue": 1, "gpPerClaim": 7691385.16, "pointsPerClaim": 1.0}, {"key": "dutcharb", "displayName": "dutch arb", "team": "Team 2", "teamColor": "#e60017", "isCaptain": false, "draftPick": 14, "preOvr": 93, "postOvr": 93, "preRank": 7, "postRank": 6, "rankSwing": 1, "deltaOvr": 0, "points": 5, "gp": 67695109, "claims": 5, "uniqueClaims": 5, "ehp": 1.72806, "ehb": 7.13175, "combat": 124, "totalLevel": 2081, "tiles": [{"tileKey": "1741641506866", "taskId": 1741641506866, "name": "Armadyl crossbow", "image": "https://oldschool.runescape.wiki/images/thumb/Armadyl_crossbow_detail.png/240px-Armadyl_crossbow_detail.png?de091", "category": "Gear", "categories": ["Gear"], "difficulty": "Easy", "wikiURL": "https://oldschool.runescape.wiki/w/Armadyl_crossbow", "count": 1, "totalGp": 31999995, "totalPoints": 1, "firstClaimAt": 1774938480000, "lastClaimAt": 1774938480000}, {"tileKey": "1746045282065", "taskId": 1746045282065, "name": "Bandos hilt", "image": "https://oldschool.runescape.wiki/images/thumb/Bandos_hilt_detail.png/240px-Bandos_hilt_detail.png?98028", "category": "Combat", "categories": ["Combat", "Loot Drop", "Godwars", "Bossing"], "difficulty": "Easy", "wikiURL": "https://oldschool.runescape.wiki/w/Bandos_hilt", "count": 1, "totalGp": 18457180, "totalPoints": 1, "firstClaimAt": 1774594920000, "lastClaimAt": 1774594920000}, {"tileKey": "1741641560248", "taskId": 1741641560248, "name": "Bandos tassets", "image": "https://oldschool.runescape.wiki/images/thumb/Bandos_tassets_detail.png/240px-Bandos_tassets_detail.png?abaeb", "category": "Gear", "categories": ["Gear"], "difficulty": "Easy", "wikiURL": "https://oldschool.runescape.wiki/w/Bandos_tassets", "count": 1, "totalGp": 16000000, "totalPoints": 1, "firstClaimAt": 1774369920000, "lastClaimAt": 1774369920000}, {"tileKey": "1746049002347", "taskId": 1746049002347, "name": "Zamorakian spear", "image": "https://oldschool.runescape.wiki/images/thumb/Zamorakian_spear_detail.png/240px-Zamorakian_spear_detail.png?29623", "category": "Gear", "categories": ["Gear"], "difficulty": "Easy", "wikiURL": "https://oldschool.runescape.wiki/w/Zamorakian_spear", "count": 1, "totalGp": 1207934, "totalPoints": 1, "firstClaimAt": 1774661220000, "lastClaimAt": 1774661220000}, {"tileKey": "1746048481397", "taskId": 1746048481397, "name": "Eye of the duke", "image": "https://oldschool.runescape.wiki/images/thumb/Eye_of_the_duke_detail.png/240px-Eye_of_the_duke_detail.png?99817", "category": "Combat", "categories": ["Combat"], "difficulty": "Easy", "wikiURL": "https://oldschool.runescape.wiki/w/Eye_of_the_duke", "count": 1, "totalGp": 30000, "totalPoints": 1, "firstClaimAt": 1774652640000, "lastClaimAt": 1774652640000}], "pointsRank": 17, "draftValue": -3, "gpPerClaim": 13539021.8, "pointsPerClaim": 1.0}, {"key": "throattity", "displayName": "Throat_Tity", "team": "Team 1", "teamColor": "#3d88eb", "isCaptain": false, "draftPick": 6, "preOvr": 93, "postOvr": 93, "preRank": 6, "postRank": 7, "rankSwing": -1, "deltaOvr": 0, "points": 10, "gp": 21097546, "claims": 10, "uniqueClaims": 10, "ehp": 3.26815, "ehb": 43.23395, "combat": 91, "totalLevel": 2101, "tiles": [{"tileKey": "1741641431615", "taskId": 1741641431615, "name": "Venator shard", "image": "https://oldschool.runescape.wiki/images/thumb/Venator_shard_detail.png/240px-Venator_shard_detail.png?3ad3e", "category": "Loot Drop", "categories": ["Loot Drop", "Bossing"], "difficulty": "Easy", "wikiURL": "https://oldschool.runescape.wiki/w/Venator_shard", "count": 1, "totalGp": 12626663, "totalPoints": 1, "firstClaimAt": 1775100360000, "lastClaimAt": 1775100360000}, {"tileKey": "1773471732562", "taskId": 1773471732562, "name": "Dharok's armour set", "image": "https://oldschool.runescape.wiki/images/thumb/Dharok%27s_armour_set_detail.png/240px-Dharok%27s_armour_set_detail.png?3f9ea", "category": "Combat", "categories": ["Combat", "Barrows"], "difficulty": "Easy", "wikiURL": "https://oldschool.runescape.wiki/w/Dharok%27s_armour_set", "count": 1, "totalGp": 4049999, "totalPoints": 1, "firstClaimAt": 1774315740000, "lastClaimAt": 1774315740000}, {"tileKey": "1746045644034", "taskId": 1746045644034, "name": "Serpentine visage", "image": "https://oldschool.runescape.wiki/images/thumb/Serpentine_visage_detail.png/240px-Serpentine_visage_detail.png?bd940", "category": "Combat", "categories": ["Combat", "Loot Drop", "Bossing"], "difficulty": "Easy", "wikiURL": "https://oldschool.runescape.wiki/w/Serpentine_visage", "count": 1, "totalGp": 3655000, "totalPoints": 1, "firstClaimAt": 1774546500000, "lastClaimAt": 1774546500000}, {"tileKey": "1746045691314", "taskId": 1746045691314, "name": "Uncut onyx", "image": "https://oldschool.runescape.wiki/images/thumb/Uncut_onyx_detail.png/240px-Uncut_onyx_detail.png?e22b5", "category": "Combat", "categories": ["Combat", "Loot Drop", "Raids", "Bossing"], "difficulty": "Easy", "wikiURL": "https://oldschool.runescape.wiki/w/Uncut_onyx", "count": 1, "totalGp": 2377982, "totalPoints": 1, "firstClaimAt": 1774542780000, "lastClaimAt": 1774542780000}, {"tileKey": "1743447494801", "taskId": 1743447494801, "name": "Malediction ward", "image": "https://oldschool.runescape.wiki/images/thumb/Malediction_ward_detail.png/240px-Malediction_ward_detail.png?c708e", "category": "Gear", "categories": ["Gear", "1 Defense", "Slot: Off Hand"], "difficulty": "Easy", "wikiURL": "https://oldschool.runescape.wiki/w/Malediction_ward", "count": 1, "totalGp": 1888648, "totalPoints": 1, "firstClaimAt": 1774412580000, "lastClaimAt": 1774412580000}, {"tileKey": "25", "taskId": 25, "name": "Rev emblem", "image": "https://oldschool.runescape.wiki/images/thumb/Ancient_emblem_detail.png/240px-Ancient_emblem_detail.png?f448f", "category": "Other", "categories": ["Other", "Loot Drop", "Wilderness"], "difficulty": "Medium", "wikiURL": "https://oldschool.runescape.wiki/w/Ancient_emblem", "count": 1, "totalGp": 501234, "totalPoints": 1, "firstClaimAt": 1774318440000, "lastClaimAt": 1774318440000}, {"tileKey": "1746062242163", "taskId": 1746062242163, "name": "Amulet of avarice", "image": "https://oldschool.runescape.wiki/images/thumb/Amulet_of_avarice_detail.png/240px-Amulet_of_avarice_detail.png?66c00", "category": "Gear", "categories": ["Gear"], "difficulty": "Easy", "wikiURL": "https://oldschool.runescape.wiki/w/Amulet_of_avarice", "count": 1, "totalGp": 479995, "totalPoints": 1, "firstClaimAt": 1774317600000, "lastClaimAt": 1774317600000}, {"tileKey": "24", "taskId": 24, "name": "Jar of chemicals", "image": "https://oldschool.runescape.wiki/images/thumb/Jar_of_chemicals_detail.png/240px-Jar_of_chemicals_detail.png?7bdc6", "category": "Other", "categories": ["Other", "Loot Drop", "Bossing", "Slayer"], "difficulty": "Medium", "wikiURL": "https://oldschool.runescape.wiki/w/Jar_of_chemicals", "count": 1, "totalGp": 77724, "totalPoints": 1, "firstClaimAt": 1774398420000, "lastClaimAt": 1774398420000}, {"tileKey": "1746048588668", "taskId": 1746048588668, "name": "Ice quartz", "image": "https://oldschool.runescape.wiki/images/thumb/Ice_quartz_detail.png/240px-Ice_quartz_detail.png?99817", "category": "Combat", "categories": ["Combat"], "difficulty": "Easy", "wikiURL": "https://oldschool.runescape.wiki/w/Ice_quartz", "count": 1, "totalGp": 60000, "totalPoints": 1, "firstClaimAt": 1774422360000, "lastClaimAt": 1774422360000}, {"tileKey": "1746048533063", "taskId": 1746048533063, "name": "Leviathan's lure", "image": "https://oldschool.runescape.wiki/images/thumb/Leviathan%27s_lure_detail.png/240px-Leviathan%27s_lure_detail.png?88b4e", "category": "Combat", "categories": ["Combat"], "difficulty": "Easy", "wikiURL": "https://oldschool.runescape.wiki/w/Leviathan%27s_lure", "count": 1, "totalGp": 30000, "totalPoints": 1, "firstClaimAt": 1775330160000, "lastClaimAt": 1775330160000}], "pointsRank": 7, "draftValue": -1, "gpPerClaim": 2109754.6, "pointsPerClaim": 1.0}, {"key": "toopro4dc", "displayName": "Toopro4DC", "team": "Team 3", "teamColor": "#05ff05", "isCaptain": false, "draftPick": 9, "preOvr": 92, "postOvr": 92, "preRank": 8, "postRank": 8, "rankSwing": 0, "deltaOvr": 0, "points": 6, "gp": 29967253, "claims": 6, "uniqueClaims": 6, "ehp": 0.14585, "ehb": 2.75849, "combat": 125, "totalLevel": 2074, "tiles": [{"tileKey": "1743452395302", "taskId": 1743452395302, "name": "Bandos chestplate", "image": "https://oldschool.runescape.wiki/images/thumb/Bandos_chestplate_detail.png/240px-Bandos_chestplate_detail.png?98028", "category": "Gear", "categories": ["Gear"], "difficulty": "Easy", "wikiURL": "https://oldschool.runescape.wiki/w/Bandos_chestplate", "count": 1, "totalGp": 24000000, "totalPoints": 1, "firstClaimAt": 1774639740000, "lastClaimAt": 1774639740000}, {"tileKey": "1773471631683", "taskId": 1773471631683, "name": "Blue moon armour set", "image": "https://oldschool.runescape.wiki/images/thumb/Blue_moon_armour_set_detail.png/240px-Blue_moon_armour_set_detail.png?04ed8", "category": "Combat", "categories": ["Combat"], "difficulty": "Easy", "wikiURL": "https://oldschool.runescape.wiki/w/Blue_moon_armour_set", "count": 1, "totalGp": 4387850, "totalPoints": 1, "firstClaimAt": 1774338120000, "lastClaimAt": 1774338120000}, {"tileKey": "1740013539457", "taskId": 1740013539457, "name": "Berserker ring", "image": "https://oldschool.runescape.wiki/images/thumb/Berserker_ring_detail.png/240px-Berserker_ring_detail.png?81f8b", "category": "Gear", "categories": ["Gear"], "difficulty": "Easy", "wikiURL": "https://oldschool.runescape.wiki/w/Berserker_ring", "count": 1, "totalGp": 3219000, "totalPoints": 1, "firstClaimAt": 1774472580000, "lastClaimAt": 1774472580000}, {"tileKey": "1740013603905", "taskId": 1740013603905, "name": "Seers ring", "image": "https://oldschool.runescape.wiki/images/thumb/Seers_ring_detail.png/240px-Seers_ring_detail.png?c8823", "category": "Gear", "categories": ["Gear"], "difficulty": "Easy", "wikiURL": "https://oldschool.runescape.wiki/w/Seers_ring", "count": 1, "totalGp": 813436, "totalPoints": 1, "firstClaimAt": 1774333080000, "lastClaimAt": 1774333080000}, {"tileKey": "1742298244422", "taskId": 1742298244422, "name": "Dragon boots", "image": "https://oldschool.runescape.wiki/images/thumb/Dragon_boots_detail.png/240px-Dragon_boots_detail.png?35048", "category": "Gear", "categories": ["Gear"], "difficulty": "Easy", "wikiURL": "https://oldschool.runescape.wiki/w/Dragon_boots", "count": 1, "totalGp": 262868, "totalPoints": 1, "firstClaimAt": 1774314840000, "lastClaimAt": 1774314840000}, {"tileKey": "1773472747449", "taskId": 1773472747449, "name": "Fangs of venenatis", "image": "https://oldschool.runescape.wiki/images/thumb/Fangs_of_venenatis_detail.png/240px-Fangs_of_venenatis_detail.png?bb22e", "category": "Combat", "categories": ["Combat"], "difficulty": "Easy", "wikiURL": "https://oldschool.runescape.wiki/w/Fangs_of_venenatis", "count": 1, "totalGp": 56949, "totalPoints": 1, "firstClaimAt": 1774391880000, "lastClaimAt": 1774391880000}], "pointsRank": 15, "draftValue": -6, "gpPerClaim": 4994542.17, "pointsPerClaim": 1.0}, {"key": "bearl", "displayName": "Bear L", "team": "Team 3", "teamColor": "#05ff05", "isCaptain": true, "draftPick": null, "preOvr": 91, "postOvr": 90, "preRank": 9, "postRank": 9, "rankSwing": 0, "deltaOvr": -1, "points": 6, "gp": 376887564, "claims": 6, "uniqueClaims": 6, "ehp": 1.83043, "ehb": 30.05105, "combat": 126, "totalLevel": 2037, "tiles": [{"tileKey": "1746045189807", "taskId": 1746045189807, "name": "Nihil horn", "image": "https://oldschool.runescape.wiki/images/thumb/Nihil_horn_detail.png/240px-Nihil_horn_detail.png?f672b", "category": "Loot Drop", "categories": ["Loot Drop", "Godwars", "Bossing"], "difficulty": "Hard", "wikiURL": "https://oldschool.runescape.wiki/w/Nihil_horn", "count": 1, "totalGp": 347700000, "totalPoints": 1, "firstClaimAt": 1774687440000, "lastClaimAt": 1774687440000}, {"tileKey": "1743447328015", "taskId": 1743447328015, "name": "Twisted buckler", "image": "https://oldschool.runescape.wiki/images/thumb/Twisted_buckler_detail.png/240px-Twisted_buckler_detail.png?75ade", "category": "Gear", "categories": ["Gear"], "difficulty": "Easy", "wikiURL": "https://oldschool.runescape.wiki/w/Twisted_buckler", "count": 1, "totalGp": 14668086, "totalPoints": 1, "firstClaimAt": 1775374200000, "lastClaimAt": 1775374200000}, {"tileKey": "1773471655693", "taskId": 1773471655693, "name": "Blood moon armour set", "image": "https://oldschool.runescape.wiki/images/thumb/Blood_moon_armour_set_detail.png/240px-Blood_moon_armour_set_detail.png?04ed8", "category": "Combat", "categories": ["Combat"], "difficulty": "Easy", "wikiURL": "https://oldschool.runescape.wiki/w/Blood_moon_armour_set", "count": 1, "totalGp": 10375545, "totalPoints": 1, "firstClaimAt": 1774387080000, "lastClaimAt": 1774387080000}, {"tileKey": "1746046201844", "taskId": 1746046201844, "name": "Arcane prayer scroll", "image": "https://oldschool.runescape.wiki/images/thumb/Arcane_prayer_scroll_detail.png/240px-Arcane_prayer_scroll_detail.png?54108", "category": "Combat", "categories": ["Combat", "Loot Drop", "Raids"], "difficulty": "Easy", "wikiURL": "https://oldschool.runescape.wiki/w/Arcane_prayer_scroll", "count": 1, "totalGp": 4993427, "totalPoints": 1, "firstClaimAt": 1775293020000, "lastClaimAt": 1775293020000}, {"tileKey": "1773471732562", "taskId": 1773471732562, "name": "Dharok's armour set", "image": "https://oldschool.runescape.wiki/images/thumb/Dharok%27s_armour_set_detail.png/240px-Dharok%27s_armour_set_detail.png?3f9ea", "category": "Combat", "categories": ["Combat", "Barrows"], "difficulty": "Easy", "wikiURL": "https://oldschool.runescape.wiki/w/Dharok%27s_armour_set", "count": 1, "totalGp": 4049999, "totalPoints": 1, "firstClaimAt": 1774410360000, "lastClaimAt": 1774410360000}, {"tileKey": "1746041889908", "taskId": 1746041889908, "name": "Soulflame horn", "image": "https://oldschool.runescape.wiki/images/thumb/Soulflame_horn_detail.png/240px-Soulflame_horn_detail.png?4fb4d", "category": "Gear", "categories": ["Gear"], "difficulty": "Easy", "wikiURL": "https://oldschool.runescape.wiki/w/Soulflame_horn", "count": 1, "totalGp": 3814973, "totalPoints": 1, "firstClaimAt": 1774505400000, "lastClaimAt": 1774505400000}], "pointsRank": null, "draftValue": null, "gpPerClaim": 62814594.0, "pointsPerClaim": 1.0}, {"key": "harynuhtsac", "displayName": "hary nuhtsac", "team": "Team 2", "teamColor": "#e60017", "isCaptain": false, "draftPick": 17, "preOvr": 90, "postOvr": 90, "preRank": 10, "postRank": 10, "rankSwing": 0, "deltaOvr": 0, "points": 2, "gp": 6594576, "claims": 2, "uniqueClaims": 2, "ehp": 0.02075, "ehb": 0.08812, "combat": 124, "totalLevel": 2084, "tiles": [{"tileKey": "1746129015378", "taskId": 1746129015378, "name": "Bryophyta's essence", "image": "https://oldschool.runescape.wiki/images/thumb/Bryophyta%27s_essence_detail.png/240px-Bryophyta%27s_essence_detail.png?e56c2", "category": "Combat", "categories": ["Combat"], "difficulty": "Easy", "wikiURL": "https://oldschool.runescape.wiki/w/Bryophyta%27s_essence", "count": 1, "totalGp": 4050595, "totalPoints": 1, "firstClaimAt": 1775299200000, "lastClaimAt": 1775299200000}, {"tileKey": "1742320407448", "taskId": 1742320407448, "name": "Aranea boots", "image": "https://oldschool.runescape.wiki/images/thumb/Aranea_boots_detail.png/240px-Aranea_boots_detail.png?43deb", "category": "Gear", "categories": ["Gear"], "difficulty": "Easy", "wikiURL": "https://oldschool.runescape.wiki/w/Aranea_boots", "count": 1, "totalGp": 2543981, "totalPoints": 1, "firstClaimAt": 1775374620000, "lastClaimAt": 1775374620000}], "pointsRank": 24, "draftValue": -7, "gpPerClaim": 3297288.0, "pointsPerClaim": 1.0}, {"key": "darkcondoms", "displayName": "Dark Condoms", "team": "Team 3", "teamColor": "#05ff05", "isCaptain": false, "draftPick": 15, "preOvr": 89, "postOvr": 89, "preRank": 11, "postRank": 11, "rankSwing": 0, "deltaOvr": 0, "points": 5, "gp": 14899498, "claims": 5, "uniqueClaims": 5, "ehp": 1.83592, "ehb": 5.2501, "combat": 118, "totalLevel": 2131, "tiles": [{"tileKey": "1746045661576", "taskId": 1746045661576, "name": "Tanzanite fang", "image": "https://oldschool.runescape.wiki/images/thumb/Tanzanite_fang_detail.png/240px-Tanzanite_fang_detail.png?859ba", "category": "Combat", "categories": ["Combat", "Loot Drop", "Bossing"], "difficulty": "Easy", "wikiURL": "https://oldschool.runescape.wiki/w/Tanzanite_fang", "count": 1, "totalGp": 10725000, "totalPoints": 1, "firstClaimAt": 1774993860000, "lastClaimAt": 1774993860000}, {"tileKey": "1746045644034", "taskId": 1746045644034, "name": "Serpentine visage", "image": "https://oldschool.runescape.wiki/images/thumb/Serpentine_visage_detail.png/240px-Serpentine_visage_detail.png?bd940", "category": "Combat", "categories": ["Combat", "Loot Drop", "Bossing"], "difficulty": "Easy", "wikiURL": "https://oldschool.runescape.wiki/w/Serpentine_visage", "count": 1, "totalGp": 3655000, "totalPoints": 1, "firstClaimAt": 1774871220000, "lastClaimAt": 1774871220000}, {"tileKey": "1743455339936", "taskId": 1743455339936, "name": "Tecu salamander", "image": "https://oldschool.runescape.wiki/images/thumb/Tecu_salamander_detail.png/240px-Tecu_salamander_detail.png?50d08", "category": "Gear", "categories": ["Gear"], "difficulty": "Easy", "wikiURL": "https://oldschool.runescape.wiki/w/Tecu_salamander", "count": 1, "totalGp": 280148, "totalPoints": 1, "firstClaimAt": 1774326360000, "lastClaimAt": 1774326360000}, {"tileKey": "1773476169535", "taskId": 1773476169535, "name": "Ancient crystal", "image": "https://oldschool.runescape.wiki/images/thumb/Ancient_crystal_detail.png/240px-Ancient_crystal_detail.png?e0645", "category": "Combat", "categories": ["Combat"], "difficulty": "Easy", "wikiURL": "htthttps://oldschool.runescape.wiki/w/Ancient_crystalps://oldschool.runescape.wiki/w/Ancient_crystal", "count": 1, "totalGp": 166499, "totalPoints": 1, "firstClaimAt": 1774729860000, "lastClaimAt": 1774729860000}, {"tileKey": "1740013578625", "taskId": 1740013578625, "name": "Warrior ring", "image": "https://oldschool.runescape.wiki/images/thumb/Warrior_ring_detail.png/240px-Warrior_ring_detail.png?4a4e9", "category": "Gear", "categories": ["Gear"], "difficulty": "Easy", "wikiURL": "https://oldschool.runescape.wiki/w/Warrior_ring", "count": 1, "totalGp": 72851, "totalPoints": 1, "firstClaimAt": 1775359320000, "lastClaimAt": 1775359320000}], "pointsRank": 18, "draftValue": -3, "gpPerClaim": 2979899.6, "pointsPerClaim": 1.0}, {"key": "uncled863", "displayName": "uncled863", "team": "Team 3", "teamColor": "#05ff05", "isCaptain": false, "draftPick": 3, "preOvr": 89, "postOvr": 88, "preRank": 12, "postRank": 12, "rankSwing": 0, "deltaOvr": -1, "points": 0, "gp": 0, "claims": 0, "uniqueClaims": 0, "ehp": 0.11368, "ehb": 1.85577, "combat": 126, "totalLevel": 2065, "tiles": [], "pointsRank": 27, "draftValue": -24, "gpPerClaim": 0, "pointsPerClaim": 0}, {"key": "alwaysplankn", "displayName": "alwaysplankn", "team": "Team 1", "teamColor": "#3d88eb", "isCaptain": false, "draftPick": 18, "preOvr": 88, "postOvr": 88, "preRank": 13, "postRank": 13, "rankSwing": 0, "deltaOvr": 0, "points": 9, "gp": 19167695, "claims": 9, "uniqueClaims": 9, "ehp": 12.92864, "ehb": 21.3853, "combat": 126, "totalLevel": 2214, "tiles": [{"tileKey": "1773471655693", "taskId": 1773471655693, "name": "Blood moon armour set", "image": "https://oldschool.runescape.wiki/images/thumb/Blood_moon_armour_set_detail.png/240px-Blood_moon_armour_set_detail.png?04ed8", "category": "Combat", "categories": ["Combat"], "difficulty": "Easy", "wikiURL": "https://oldschool.runescape.wiki/w/Blood_moon_armour_set", "count": 1, "totalGp": 10375545, "totalPoints": 1, "firstClaimAt": 1774420500000, "lastClaimAt": 1774420500000}, {"tileKey": "1773471631683", "taskId": 1773471631683, "name": "Blue moon armour set", "image": "https://oldschool.runescape.wiki/images/thumb/Blue_moon_armour_set_detail.png/240px-Blue_moon_armour_set_detail.png?04ed8", "category": "Combat", "categories": ["Combat"], "difficulty": "Easy", "wikiURL": "https://oldschool.runescape.wiki/w/Blue_moon_armour_set", "count": 1, "totalGp": 4387850, "totalPoints": 1, "firstClaimAt": 1774386180000, "lastClaimAt": 1774386180000}, {"tileKey": "1742320745127", "taskId": 1742320745127, "name": "Mage's book", "image": "https://oldschool.runescape.wiki/images/thumb/Mage%27s_book_detail.png/240px-Mage%27s_book_detail.png?55fdd", "category": "Gear", "categories": ["Gear"], "difficulty": "Easy", "wikiURL": "https://oldschool.runescape.wiki/w/Mage%27s_book", "count": 1, "totalGp": 3770849, "totalPoints": 1, "firstClaimAt": 1775498520000, "lastClaimAt": 1775498520000}, {"tileKey": "1746046754866", "taskId": 1746046754866, "name": "Enhanced crystal teleport seed", "image": "https://oldschool.runescape.wiki/images/thumb/Enhanced_crystal_teleport_seed_detail.png/240px-Enhanced_crystal_teleport_seed_detail.png?84d93", "category": "Combat", "categories": ["Combat"], "difficulty": "Easy", "wikiURL": "https://oldschool.runescape.wiki/w/Enhanced_crystal_teleport_seed", "count": 1, "totalGp": 2910808, "totalPoints": 1, "firstClaimAt": 1775393580000, "lastClaimAt": 1775393580000}, {"tileKey": "1746046963284", "taskId": 1746046963284, "name": "Smouldering stone", "image": "https://oldschool.runescape.wiki/images/thumb/Smouldering_stone_detail.png/240px-Smouldering_stone_detail.png?98b6e", "category": "Combat", "categories": ["Combat"], "difficulty": "Easy", "wikiURL": "https://oldschool.runescape.wiki/w/Smouldering_stone", "count": 1, "totalGp": 2262108, "totalPoints": 1, "firstClaimAt": 1775401620000, "lastClaimAt": 1775401620000}, {"tileKey": "1746047832440", "taskId": 1746047832440, "name": "Black tourmaline core", "image": "https://oldschool.runescape.wiki/images/thumb/Black_tourmaline_core_detail.png/240px-Black_tourmaline_core_detail.png?6db72", "category": "Combat", "categories": ["Combat"], "difficulty": "Easy", "wikiURL": "https://oldschool.runescape.wiki/w/Black_tourmaline_core", "count": 1, "totalGp": 1600000, "totalPoints": 1, "firstClaimAt": 1774784100000, "lastClaimAt": 1774784100000}, {"tileKey": "1773471776412", "taskId": 1773471776412, "name": "Torag's armour set", "image": "https://oldschool.runescape.wiki/images/thumb/Torag%27s_armour_set_detail.png/240px-Torag%27s_armour_set_detail.png?bfb4a", "category": "Combat", "categories": ["Combat", "Barrows"], "difficulty": "Easy", "wikiURL": "https://oldschool.runescape.wiki/w/Torag%27s_armour_set", "count": 1, "totalGp": 920474, "totalPoints": 1, "firstClaimAt": 1774310820000, "lastClaimAt": 1774310820000}, {"tileKey": "1743455339936", "taskId": 1743455339936, "name": "Tecu salamander", "image": "https://oldschool.runescape.wiki/images/thumb/Tecu_salamander_detail.png/240px-Tecu_salamander_detail.png?50d08", "category": "Gear", "categories": ["Gear"], "difficulty": "Easy", "wikiURL": "https://oldschool.runescape.wiki/w/Tecu_salamander", "count": 1, "totalGp": 280148, "totalPoints": 1, "firstClaimAt": 1774570560000, "lastClaimAt": 1774570560000}, {"tileKey": "1746046924952", "taskId": 1746046924952, "name": "Pegasian crystal", "image": "https://oldschool.runescape.wiki/images/thumb/Pegasian_crystal_detail.png/240px-Pegasian_crystal_detail.png?7887c", "category": "Combat", "categories": ["Combat"], "difficulty": "Easy", "wikiURL": "https://oldschool.runescape.wiki/w/Pegasian_crystal", "count": 1, "totalGp": 138872, "totalPoints": 1, "firstClaimAt": 1775264160000, "lastClaimAt": 1775264160000}], "pointsRank": 10, "draftValue": 8, "gpPerClaim": 2129743.89, "pointsPerClaim": 1.0}, {"key": "moondancer", "displayName": "Moondancer", "team": "Team 3", "teamColor": "#05ff05", "isCaptain": false, "draftPick": 4, "preOvr": 86, "postOvr": 86, "preRank": 14, "postRank": 14, "rankSwing": 0, "deltaOvr": 0, "points": 2, "gp": 7800000, "claims": 2, "uniqueClaims": 2, "ehp": 2.85839, "ehb": 14.29877, "combat": 125, "totalLevel": 2067, "tiles": [{"tileKey": "1746045163636", "taskId": 1746045163636, "name": "Blood shard", "image": "https://oldschool.runescape.wiki/images/thumb/Blood_shard_detail.png/240px-Blood_shard_detail.png?2fbc7", "category": "Skilling", "categories": ["Skilling", "Loot Drop", "Slayer"], "difficulty": "Easy", "wikiURL": "https://oldschool.runescape.wiki/w/Blood_shard", "count": 1, "totalGp": 7800000, "totalPoints": 1, "firstClaimAt": 1774375500000, "lastClaimAt": 1774375500000}, {"tileKey": "1740105534461", "taskId": 1740105534461, "name": "pet", "image": "https://png.pngtree.com/png-clipart/20200224/original/pngtree-line-donkey-black-and-white-logo-abstract-drawing-of-png-image_5215825.jpg", "category": "Combat", "categories": ["Combat"], "difficulty": "Easy", "wikiURL": "", "count": 1, "totalGp": 0, "totalPoints": 1, "firstClaimAt": 1774318260000, "lastClaimAt": 1774318260000}], "pointsRank": 23, "draftValue": -19, "gpPerClaim": 3900000.0, "pointsPerClaim": 1.0}, {"key": "yalet0wn", "displayName": "Yalet0wn", "team": "Team 1", "teamColor": "#3d88eb", "isCaptain": false, "draftPick": 13, "preOvr": 86, "postOvr": 86, "preRank": 15, "postRank": 15, "rankSwing": 0, "deltaOvr": 0, "points": 8, "gp": 16988961, "claims": 8, "uniqueClaims": 8, "ehp": 0.57197, "ehb": 1.69645, "combat": 126, "totalLevel": 2106, "tiles": [{"tileKey": "1746062259907", "taskId": 1746062259907, "name": "Craw's bow", "image": "https://oldschool.runescape.wiki/images/thumb/Craw%27s_bow_%28u%29_detail.png/240px-Craw%27s_bow_%28u%29_detail.png?bf1fd", "category": "Gear", "categories": ["Gear"], "difficulty": "Easy", "wikiURL": "https://oldschool.runescape.wiki/w/Craw%27s_bow#Charged", "count": 1, "totalGp": 14138859, "totalPoints": 1, "firstClaimAt": 1775006640000, "lastClaimAt": 1775006640000}, {"tileKey": "1741299861625", "taskId": 1741299861625, "name": "Abyssal whip", "image": "https://oldschool.runescape.wiki/images/thumb/Abyssal_whip_detail.png/240px-Abyssal_whip_detail.png?9aee6", "category": "Gear", "categories": ["Gear"], "difficulty": "Easy", "wikiURL": "https://oldschool.runescape.wiki/w/Abyssal_whip", "count": 1, "totalGp": 1198399, "totalPoints": 1, "firstClaimAt": 1774319760000, "lastClaimAt": 1774319760000}, {"tileKey": "1746047653410", "taskId": 1746047653410, "name": "Dark bow", "image": "https://oldschool.runescape.wiki/images/thumb/Dark_bow_detail.png/240px-Dark_bow_detail.png?71f6b", "category": "Gear", "categories": ["Gear"], "difficulty": "Easy", "wikiURL": "https://oldschool.runescape.wiki/w/Dark_bow", "count": 1, "totalGp": 897238, "totalPoints": 1, "firstClaimAt": 1774922100000, "lastClaimAt": 1774922100000}, {"tileKey": "1742298244422", "taskId": 1742298244422, "name": "Dragon boots", "image": "https://oldschool.runescape.wiki/images/thumb/Dragon_boots_detail.png/240px-Dragon_boots_detail.png?35048", "category": "Gear", "categories": ["Gear"], "difficulty": "Easy", "wikiURL": "https://oldschool.runescape.wiki/w/Dragon_boots", "count": 1, "totalGp": 262868, "totalPoints": 1, "firstClaimAt": 1774321320000, "lastClaimAt": 1774321320000}, {"tileKey": "1773476169535", "taskId": 1773476169535, "name": "Ancient crystal", "image": "https://oldschool.runescape.wiki/images/thumb/Ancient_crystal_detail.png/240px-Ancient_crystal_detail.png?e0645", "category": "Combat", "categories": ["Combat"], "difficulty": "Easy", "wikiURL": "htthttps://oldschool.runescape.wiki/w/Ancient_crystalps://oldschool.runescape.wiki/w/Ancient_crystal", "count": 1, "totalGp": 166499, "totalPoints": 1, "firstClaimAt": 1775014260000, "lastClaimAt": 1775014260000}, {"tileKey": "17", "taskId": 17, "name": "Elder chaos robe piece", "image": "https://oldschool.runescape.wiki/images/thumb/Elder_chaos_druid_robes_equipped_male.png/120px-Elder_chaos_druid_robes_equipped_male.png?27e58", "category": "Other", "categories": ["Other", "Gear", "1 Defense", "Loot Drop", "Wilderness", "Slot: Legs"], "difficulty": "Medium", "wikiURL": "https://oldschool.runescape.wiki/w/Elder_chaos_robe", "count": 1, "totalGp": 157736, "totalPoints": 1, "firstClaimAt": 1774392780000, "lastClaimAt": 1774392780000}, {"tileKey": "1740013954131", "taskId": 1740013954131, "name": "Treasonous ring", "image": "https://oldschool.runescape.wiki/images/thumb/Treasonous_ring_detail.png/240px-Treasonous_ring_detail.png?859ba", "category": "Gear", "categories": ["Gear"], "difficulty": "Easy", "wikiURL": "https://oldschool.runescape.wiki/w/Treasonous_ring", "count": 1, "totalGp": 91115, "totalPoints": 1, "firstClaimAt": 1774582740000, "lastClaimAt": 1774582740000}, {"tileKey": "1740013578625", "taskId": 1740013578625, "name": "Warrior ring", "image": "https://oldschool.runescape.wiki/images/thumb/Warrior_ring_detail.png/240px-Warrior_ring_detail.png?4a4e9", "category": "Gear", "categories": ["Gear"], "difficulty": "Easy", "wikiURL": "https://oldschool.runescape.wiki/w/Warrior_ring", "count": 1, "totalGp": 72851, "totalPoints": 1, "firstClaimAt": 1774479840000, "lastClaimAt": 1774479840000}], "pointsRank": 12, "draftValue": 1, "gpPerClaim": 2123620.12, "pointsPerClaim": 1.0}, {"key": "rhedeem", "displayName": "Rhedeem", "team": "Team 2", "teamColor": "#e60017", "isCaptain": false, "draftPick": 20, "preOvr": 83, "postOvr": 83, "preRank": 18, "postRank": 16, "rankSwing": 2, "deltaOvr": 0, "points": 13, "gp": 118843573, "claims": 13, "uniqueClaims": 13, "ehp": 1.90029, "ehb": 4.00982, "combat": 121, "totalLevel": 1927, "tiles": [{"tileKey": "1746058361192", "taskId": 1746058361192, "name": "Tormented synapse", "image": "https://oldschool.runescape.wiki/images/thumb/Tormented_synapse_detail.png/240px-Tormented_synapse_detail.png?27153", "category": "Combat", "categories": ["Combat"], "difficulty": "Easy", "wikiURL": "https://oldschool.runescape.wiki/w/Tormented_synapse", "count": 1, "totalGp": 38878278, "totalPoints": 1, "firstClaimAt": 1774537320000, "lastClaimAt": 1774537320000}, {"tileKey": "1773472618073", "taskId": 1773472618073, "name": "Crystal tool seed", "image": "https://oldschool.runescape.wiki/images/thumb/Crystal_tool_seed_detail.png/240px-Crystal_tool_seed_detail.png?d8a0b", "category": "Combat", "categories": ["Combat"], "difficulty": "Easy", "wikiURL": "https://oldschool.runescape.wiki/w/Crystal_tool_seed", "count": 1, "totalGp": 22000000, "totalPoints": 1, "firstClaimAt": 1774907460000, "lastClaimAt": 1774907460000}, {"tileKey": "1746046900090", "taskId": 1746046900090, "name": "Primordial crystal", "image": "https://oldschool.runescape.wiki/images/thumb/Primordial_crystal_detail.png/240px-Primordial_crystal_detail.png?9c62f", "category": "Combat", "categories": ["Combat"], "difficulty": "Easy", "wikiURL": "https://oldschool.runescape.wiki/w/Primordial_crystal", "count": 1, "totalGp": 20750000, "totalPoints": 1, "firstClaimAt": 1774464720000, "lastClaimAt": 1774464720000}, {"tileKey": "1746047534047", "taskId": 1746047534047, "name": "Hydra leather", "image": "https://oldschool.runescape.wiki/images/thumb/Hydra_leather_detail.png/240px-Hydra_leather_detail.png?6a2a6", "category": "Combat", "categories": ["Combat"], "difficulty": "Easy", "wikiURL": "https://oldschool.runescape.wiki/w/Hydra_leather", "count": 1, "totalGp": 14539229, "totalPoints": 1, "firstClaimAt": 1774991820000, "lastClaimAt": 1774991820000}, {"tileKey": "1773471655693", "taskId": 1773471655693, "name": "Blood moon armour set", "image": "https://oldschool.runescape.wiki/images/thumb/Blood_moon_armour_set_detail.png/240px-Blood_moon_armour_set_detail.png?04ed8", "category": "Combat", "categories": ["Combat"], "difficulty": "Easy", "wikiURL": "https://oldschool.runescape.wiki/w/Blood_moon_armour_set", "count": 1, "totalGp": 10375545, "totalPoints": 1, "firstClaimAt": 1774826880000, "lastClaimAt": 1774826880000}, {"tileKey": "1746046942581", "taskId": 1746046942581, "name": "Eternal crystal", "image": "https://oldschool.runescape.wiki/images/thumb/Eternal_crystal_detail.png/240px-Eternal_crystal_detail.png?093d9", "category": "Combat", "categories": ["Combat"], "difficulty": "Easy", "wikiURL": "https://oldschool.runescape.wiki/w/Eternal_crystal", "count": 1, "totalGp": 4575102, "totalPoints": 1, "firstClaimAt": 1774455420000, "lastClaimAt": 1774455420000}, {"tileKey": "1773471631683", "taskId": 1773471631683, "name": "Blue moon armour set", "image": "https://oldschool.runescape.wiki/images/thumb/Blue_moon_armour_set_detail.png/240px-Blue_moon_armour_set_detail.png?04ed8", "category": "Combat", "categories": ["Combat"], "difficulty": "Easy", "wikiURL": "https://oldschool.runescape.wiki/w/Blue_moon_armour_set", "count": 1, "totalGp": 4387850, "totalPoints": 1, "firstClaimAt": 1774754340000, "lastClaimAt": 1774754340000}, {"tileKey": "1742429638184", "taskId": 1742429638184, "name": "Dragon harpoon", "image": "https://oldschool.runescape.wiki/images/thumb/Dragon_harpoon_detail.png/240px-Dragon_harpoon_detail.png?b14b9", "category": "Gear", "categories": ["Gear"], "difficulty": "Easy", "wikiURL": "https://oldschool.runescape.wiki/w/Dragon_harpoon", "count": 1, "totalGp": 3116708, "totalPoints": 1, "firstClaimAt": 1774915260000, "lastClaimAt": 1774915260000}, {"tileKey": "1746046963284", "taskId": 1746046963284, "name": "Smouldering stone", "image": "https://oldschool.runescape.wiki/images/thumb/Smouldering_stone_detail.png/240px-Smouldering_stone_detail.png?98b6e", "category": "Combat", "categories": ["Combat"], "difficulty": "Easy", "wikiURL": "https://oldschool.runescape.wiki/w/Smouldering_stone", "count": 1, "totalGp": 2262108, "totalPoints": 1, "firstClaimAt": 1774477620000, "lastClaimAt": 1774477620000}, {"tileKey": "1773471618184", "taskId": 1773471618184, "name": "Eclipse moon armour set", "image": "https://oldschool.runescape.wiki/images/thumb/Eclipse_moon_armour_set_detail.png/240px-Eclipse_moon_armour_set_detail.png?e0c4a", "category": "Combat", "categories": ["Combat"], "difficulty": "Easy", "wikiURL": "https://oldschool.runescape.wiki/w/Eclipse_moon_armour_set", "count": 1, "totalGp": 1918000, "totalPoints": 1, "firstClaimAt": 1774807140000, "lastClaimAt": 1774807140000}, {"tileKey": "1773471776412", "taskId": 1773471776412, "name": "Torag's armour set", "image": "https://oldschool.runescape.wiki/images/thumb/Torag%27s_armour_set_detail.png/240px-Torag%27s_armour_set_detail.png?bfb4a", "category": "Combat", "categories": ["Combat", "Barrows"], "difficulty": "Easy", "wikiURL": "https://oldschool.runescape.wiki/w/Torag%27s_armour_set", "count": 1, "totalGp": 920474, "totalPoints": 1, "firstClaimAt": 1774585920000, "lastClaimAt": 1774585920000}, {"tileKey": "1746047653410", "taskId": 1746047653410, "name": "Dark bow", "image": "https://oldschool.runescape.wiki/images/thumb/Dark_bow_detail.png/240px-Dark_bow_detail.png?71f6b", "category": "Gear", "categories": ["Gear"], "difficulty": "Easy", "wikiURL": "https://oldschool.runescape.wiki/w/Dark_bow", "count": 1, "totalGp": 897238, "totalPoints": 1, "firstClaimAt": 1774396800000, "lastClaimAt": 1774396800000}, {"tileKey": "1740105534461", "taskId": 1740105534461, "name": "pet", "image": "https://png.pngtree.com/png-clipart/20200224/original/pngtree-line-donkey-black-and-white-logo-abstract-drawing-of-png-image_5215825.jpg", "category": "Combat", "categories": ["Combat"], "difficulty": "Easy", "wikiURL": "", "count": 1, "totalGp": 0, "totalPoints": 1, "firstClaimAt": 1774406880000, "lastClaimAt": 1774406880000}], "pointsRank": 3, "draftValue": 17, "gpPerClaim": 9141813.31, "pointsPerClaim": 1.0}, {"key": "ncdj7", "displayName": "NCDJ 7", "team": "Team 2", "teamColor": "#e60017", "isCaptain": false, "draftPick": 8, "preOvr": 84, "postOvr": 83, "preRank": 16, "postRank": 17, "rankSwing": -1, "deltaOvr": -1, "points": 10, "gp": 45453442, "claims": 10, "uniqueClaims": 10, "ehp": 12.95924, "ehb": 28.74781, "combat": 121, "totalLevel": 2088, "tiles": [{"tileKey": "1741641322853", "taskId": 1741641322853, "name": "Voidwaker gem", "image": "https://oldschool.runescape.wiki/images/thumb/Voidwaker_gem_detail.png/240px-Voidwaker_gem_detail.png?fcc14", "category": "Combat", "categories": ["Combat", "Loot Drop", "Wilderness"], "difficulty": "Easy", "wikiURL": "https://oldschool.runescape.wiki/w/Voidwaker_gem", "count": 1, "totalGp": 28000000, "totalPoints": 1, "firstClaimAt": 1774610280000, "lastClaimAt": 1774610280000}, {"tileKey": "1746062259907", "taskId": 1746062259907, "name": "Craw's bow", "image": "https://oldschool.runescape.wiki/images/thumb/Craw%27s_bow_%28u%29_detail.png/240px-Craw%27s_bow_%28u%29_detail.png?bf1fd", "category": "Gear", "categories": ["Gear"], "difficulty": "Easy", "wikiURL": "https://oldschool.runescape.wiki/w/Craw%27s_bow#Charged", "count": 1, "totalGp": 14138859, "totalPoints": 1, "firstClaimAt": 1774524540000, "lastClaimAt": 1774524540000}, {"tileKey": "1773472035391", "taskId": 1773472035391, "name": "Dagon'hai robes set", "image": "https://oldschool.runescape.wiki/images/thumb/Dagon%27hai_robes_set_detail.png/240px-Dagon%27hai_robes_set_detail.png?6b4ec", "category": "Combat", "categories": ["Combat"], "difficulty": "Easy", "wikiURL": "https://oldschool.runescape.wiki/w/Dagon%27hai_robes_set", "count": 1, "totalGp": 1419773, "totalPoints": 1, "firstClaimAt": 1774319340000, "lastClaimAt": 1774319340000}, {"tileKey": "1741299861625", "taskId": 1741299861625, "name": "Abyssal whip", "image": "https://oldschool.runescape.wiki/images/thumb/Abyssal_whip_detail.png/240px-Abyssal_whip_detail.png?9aee6", "category": "Gear", "categories": ["Gear"], "difficulty": "Easy", "wikiURL": "https://oldschool.runescape.wiki/w/Abyssal_whip", "count": 1, "totalGp": 1198399, "totalPoints": 1, "firstClaimAt": 1774336980000, "lastClaimAt": 1774336980000}, {"tileKey": "25", "taskId": 25, "name": "Rev emblem", "image": "https://oldschool.runescape.wiki/images/thumb/Ancient_emblem_detail.png/240px-Ancient_emblem_detail.png?f448f", "category": "Other", "categories": ["Other", "Loot Drop", "Wilderness"], "difficulty": "Medium", "wikiURL": "https://oldschool.runescape.wiki/w/Ancient_emblem", "count": 1, "totalGp": 501234, "totalPoints": 1, "firstClaimAt": 1774368360000, "lastClaimAt": 1774368360000}, {"tileKey": "1742429594489", "taskId": 1742429594489, "name": "Dragon pickaxe", "image": "https://oldschool.runescape.wiki/images/thumb/Dragon_pickaxe_detail.png/240px-Dragon_pickaxe_detail.png?4f4ee", "category": "Gear", "categories": ["Gear"], "difficulty": "Easy", "wikiURL": "https://oldschool.runescape.wiki/w/Dragon_pickaxe", "count": 1, "totalGp": 459989, "totalPoints": 1, "firstClaimAt": 1774462200000, "lastClaimAt": 1774462200000}, {"tileKey": "1740013971839", "taskId": 1740013971839, "name": "Tyrannical ring", "image": "https://oldschool.runescape.wiki/images/thumb/Tyrannical_ring_detail.png/240px-Tyrannical_ring_detail.png?36d00", "category": "Gear", "categories": ["Gear"], "difficulty": "Easy", "wikiURL": "https://oldschool.runescape.wiki/w/Tyrannical_ring", "count": 1, "totalGp": 273525, "totalPoints": 1, "firstClaimAt": 1774712940000, "lastClaimAt": 1774712940000}, {"tileKey": "1773476169535", "taskId": 1773476169535, "name": "Ancient crystal", "image": "https://oldschool.runescape.wiki/images/thumb/Ancient_crystal_detail.png/240px-Ancient_crystal_detail.png?e0645", "category": "Combat", "categories": ["Combat"], "difficulty": "Easy", "wikiURL": "htthttps://oldschool.runescape.wiki/w/Ancient_crystalps://oldschool.runescape.wiki/w/Ancient_crystal", "count": 1, "totalGp": 166499, "totalPoints": 1, "firstClaimAt": 1774342440000, "lastClaimAt": 1774342440000}, {"tileKey": "17", "taskId": 17, "name": "Elder chaos robe piece", "image": "https://oldschool.runescape.wiki/images/thumb/Elder_chaos_druid_robes_equipped_male.png/120px-Elder_chaos_druid_robes_equipped_male.png?27e58", "category": "Other", "categories": ["Other", "Gear", "1 Defense", "Loot Drop", "Wilderness", "Slot: Legs"], "difficulty": "Medium", "wikiURL": "https://oldschool.runescape.wiki/w/Elder_chaos_robe", "count": 1, "totalGp": 157736, "totalPoints": 1, "firstClaimAt": 1774385820000, "lastClaimAt": 1774385820000}, {"tileKey": "1773472724610", "taskId": 1773472724610, "name": "Claws of callisto", "image": "https://oldschool.runescape.wiki/images/thumb/Claws_of_callisto_detail.png/240px-Claws_of_callisto_detail.png?bb22e", "category": "Combat", "categories": ["Combat"], "difficulty": "Easy", "wikiURL": "https://oldschool.runescape.wiki/w/Claws_of_callisto", "count": 1, "totalGp": 53312, "totalPoints": 1, "firstClaimAt": 1775155680000, "lastClaimAt": 1775155680000}], "pointsRank": 5, "draftValue": 3, "gpPerClaim": 4545344.2, "pointsPerClaim": 1.0}, {"key": "dcstepnegro", "displayName": "DcStepNegro", "team": "Team 2", "teamColor": "#e60017", "isCaptain": false, "draftPick": 11, "preOvr": 83, "postOvr": 83, "preRank": 17, "postRank": 18, "rankSwing": -1, "deltaOvr": 0, "points": 6, "gp": 8904955, "claims": 6, "uniqueClaims": 6, "ehp": 7.86617, "ehb": 11.86472, "combat": 122, "totalLevel": 1975, "tiles": [{"tileKey": "1773471732562", "taskId": 1773471732562, "name": "Dharok's armour set", "image": "https://oldschool.runescape.wiki/images/thumb/Dharok%27s_armour_set_detail.png/240px-Dharok%27s_armour_set_detail.png?3f9ea", "category": "Combat", "categories": ["Combat", "Barrows"], "difficulty": "Easy", "wikiURL": "https://oldschool.runescape.wiki/w/Dharok%27s_armour_set", "count": 1, "totalGp": 4049999, "totalPoints": 1, "firstClaimAt": 1774324920000, "lastClaimAt": 1774324920000}, {"tileKey": "1743444258098", "taskId": 1743444258098, "name": "Granite hammer", "image": "https://oldschool.runescape.wiki/images/thumb/Granite_hammer_detail.png/240px-Granite_hammer_detail.png?a6345", "category": "Gear", "categories": ["Gear"], "difficulty": "Easy", "wikiURL": "https://oldschool.runescape.wiki/w/Granite_hammer", "count": 1, "totalGp": 3449999, "totalPoints": 1, "firstClaimAt": 1775302380000, "lastClaimAt": 1775302380000}, {"tileKey": "1773471760804", "taskId": 1773471760804, "name": "Karil's armour set", "image": "https://oldschool.runescape.wiki/images/thumb/Karil%27s_armour_set_detail.png/240px-Karil%27s_armour_set_detail.png?667a2", "category": "Combat", "categories": ["Combat", "Barrows"], "difficulty": "Easy", "wikiURL": "https://oldschool.runescape.wiki/w/Karil%27s_armour_set", "count": 1, "totalGp": 2128199, "totalPoints": 1, "firstClaimAt": 1774323120000, "lastClaimAt": 1774323120000}, {"tileKey": "1746047832440", "taskId": 1746047832440, "name": "Black tourmaline core", "image": "https://oldschool.runescape.wiki/images/thumb/Black_tourmaline_core_detail.png/240px-Black_tourmaline_core_detail.png?6db72", "category": "Combat", "categories": ["Combat"], "difficulty": "Easy", "wikiURL": "https://oldschool.runescape.wiki/w/Black_tourmaline_core", "count": 1, "totalGp": 1600000, "totalPoints": 1, "firstClaimAt": 1775320320000, "lastClaimAt": 1775320320000}, {"tileKey": "1773471790960", "taskId": 1773471790960, "name": "Verac's armour set", "image": "https://oldschool.runescape.wiki/images/thumb/Verac%27s_armour_set_detail.png/240px-Verac%27s_armour_set_detail.png?84fd4", "category": "Combat", "categories": ["Combat", "Barrows"], "difficulty": "Easy", "wikiURL": "https://oldschool.runescape.wiki/w/Verac%27s_armour_set", "count": 1, "totalGp": 779472, "totalPoints": 1, "firstClaimAt": 1774321620000, "lastClaimAt": 1774321620000}, {"tileKey": "1741302452640", "taskId": 1741302452640, "name": "Occult necklace", "image": "https://oldschool.runescape.wiki/images/thumb/Occult_necklace_detail.png/240px-Occult_necklace_detail.png?08adc", "category": "Gear", "categories": ["Gear"], "difficulty": "Easy", "wikiURL": "https://oldschool.runescape.wiki/w/Occult_necklace", "count": 1, "totalGp": 440593, "totalPoints": 1, "firstClaimAt": 1775309820000, "lastClaimAt": 1775309820000}], "pointsRank": 16, "draftValue": -5, "gpPerClaim": 1484159.17, "pointsPerClaim": 1.0}, {"key": "comonproject", "displayName": "ComonProject", "team": "Team 1", "teamColor": "#3d88eb", "isCaptain": false, "draftPick": 12, "preOvr": 81, "postOvr": 82, "preRank": 20, "postRank": 19, "rankSwing": 1, "deltaOvr": 1, "points": 14, "gp": 85788317, "claims": 14, "uniqueClaims": 14, "ehp": 0.24109, "ehb": 10.80357, "combat": 126, "totalLevel": 1893, "tiles": [{"tileKey": "1743455552319", "taskId": 1743455552319, "name": "Armadyl chainskirt", "image": "https://oldschool.runescape.wiki/images/thumb/Armadyl_chainskirt_detail.png/240px-Armadyl_chainskirt_detail.png?9bcc8", "category": "Gear", "categories": ["Gear"], "difficulty": "Easy", "wikiURL": "https://oldschool.runescape.wiki/w/Armadyl_chainskirt", "count": 1, "totalGp": 27600000, "totalPoints": 1, "firstClaimAt": 1775392560000, "lastClaimAt": 1775392560000}, {"tileKey": "1746045299254", "taskId": 1746045299254, "name": "Saradomin hilt", "image": "https://oldschool.runescape.wiki/images/thumb/Saradomin_hilt_detail.png/240px-Saradomin_hilt_detail.png?f9ce8", "category": "Combat", "categories": ["Combat", "Loot Drop", "Godwars"], "difficulty": "Easy", "wikiURL": "https://oldschool.runescape.wiki/w/Saradomin_hilt", "count": 1, "totalGp": 27000000, "totalPoints": 1, "firstClaimAt": 1775442300000, "lastClaimAt": 1775442300000}, {"tileKey": "1743452395302", "taskId": 1743452395302, "name": "Bandos chestplate", "image": "https://oldschool.runescape.wiki/images/thumb/Bandos_chestplate_detail.png/240px-Bandos_chestplate_detail.png?98028", "category": "Gear", "categories": ["Gear"], "difficulty": "Easy", "wikiURL": "https://oldschool.runescape.wiki/w/Bandos_chestplate", "count": 1, "totalGp": 24000000, "totalPoints": 1, "firstClaimAt": 1775104440000, "lastClaimAt": 1775104440000}, {"tileKey": "1746129015378", "taskId": 1746129015378, "name": "Bryophyta's essence", "image": "https://oldschool.runescape.wiki/images/thumb/Bryophyta%27s_essence_detail.png/240px-Bryophyta%27s_essence_detail.png?e56c2", "category": "Combat", "categories": ["Combat"], "difficulty": "Easy", "wikiURL": "https://oldschool.runescape.wiki/w/Bryophyta%27s_essence", "count": 1, "totalGp": 4050595, "totalPoints": 1, "firstClaimAt": 1775450340000, "lastClaimAt": 1775450340000}, {"tileKey": "1773472035391", "taskId": 1773472035391, "name": "Dagon'hai robes set", "image": "https://oldschool.runescape.wiki/images/thumb/Dagon%27hai_robes_set_detail.png/240px-Dagon%27hai_robes_set_detail.png?6b4ec", "category": "Combat", "categories": ["Combat"], "difficulty": "Easy", "wikiURL": "https://oldschool.runescape.wiki/w/Dagon%27hai_robes_set", "count": 1, "totalGp": 1419773, "totalPoints": 1, "firstClaimAt": 1774313580000, "lastClaimAt": 1774313580000}, {"tileKey": "1741641368176", "taskId": 1741641368176, "name": "Voidwaker blade", "image": "https://oldschool.runescape.wiki/images/thumb/Voidwaker_blade_detail.png/240px-Voidwaker_blade_detail.png?fcc14", "category": "Combat", "categories": ["Combat", "Loot Drop", "Wilderness"], "difficulty": "Easy", "wikiURL": "https://oldschool.runescape.wiki/w/Voidwaker_blade", "count": 1, "totalGp": 1413175, "totalPoints": 1, "firstClaimAt": 1774972560000, "lastClaimAt": 1774972560000}, {"tileKey": "1773471746998", "taskId": 1773471746998, "name": "Guthan's armour set", "image": "https://oldschool.runescape.wiki/images/thumb/Guthan%27s_armour_set_detail.png/240px-Guthan%27s_armour_set_detail.png?0ff52", "category": "Combat", "categories": ["Combat", "Barrows"], "difficulty": "Easy", "wikiURL": "https://oldschool.runescape.wiki/w/Guthan%27s_armour_set", "count": 1, "totalGp": 790000, "totalPoints": 1, "firstClaimAt": 1774317480000, "lastClaimAt": 1774317480000}, {"tileKey": "1773471790960", "taskId": 1773471790960, "name": "Verac's armour set", "image": "https://oldschool.runescape.wiki/images/thumb/Verac%27s_armour_set_detail.png/240px-Verac%27s_armour_set_detail.png?84fd4", "category": "Combat", "categories": ["Combat", "Barrows"], "difficulty": "Easy", "wikiURL": "https://oldschool.runescape.wiki/w/Verac%27s_armour_set", "count": 1, "totalGp": 779472, "totalPoints": 1, "firstClaimAt": 1774343880000, "lastClaimAt": 1774343880000}, {"tileKey": "1742429594489", "taskId": 1742429594489, "name": "Dragon pickaxe", "image": "https://oldschool.runescape.wiki/images/thumb/Dragon_pickaxe_detail.png/240px-Dragon_pickaxe_detail.png?4f4ee", "category": "Gear", "categories": ["Gear"], "difficulty": "Easy", "wikiURL": "https://oldschool.runescape.wiki/w/Dragon_pickaxe", "count": 1, "totalGp": 459989, "totalPoints": 1, "firstClaimAt": 1774406280000, "lastClaimAt": 1774406280000}, {"tileKey": "1743443728212", "taskId": 1743443728212, "name": "Dragon chainbody", "image": "https://oldschool.runescape.wiki/images/thumb/Dragon_chainbody_detail.png/240px-Dragon_chainbody_detail.png?35048", "category": "Gear", "categories": ["Gear"], "difficulty": "Easy", "wikiURL": "https://oldschool.runescape.wiki/w/Dragon_chainbody", "count": 1, "totalGp": 291481, "totalPoints": 1, "firstClaimAt": 1774703100000, "lastClaimAt": 1774703100000}, {"tileKey": "1742429789106", "taskId": 1742429789106, "name": "Dragon 2h sword", "image": "https://oldschool.runescape.wiki/images/thumb/Dragon_2h_sword_detail.png/240px-Dragon_2h_sword_detail.png?6ed9d", "category": "Gear", "categories": ["Gear"], "difficulty": "Easy", "wikiURL": "https://oldschool.runescape.wiki/w/Dragon_2h_sword", "count": 1, "totalGp": 131713, "totalPoints": 1, "firstClaimAt": 1774362720000, "lastClaimAt": 1774362720000}, {"tileKey": "1773472747449", "taskId": 1773472747449, "name": "Fangs of venenatis", "image": "https://oldschool.runescape.wiki/images/thumb/Fangs_of_venenatis_detail.png/240px-Fangs_of_venenatis_detail.png?bb22e", "category": "Combat", "categories": ["Combat"], "difficulty": "Easy", "wikiURL": "https://oldschool.runescape.wiki/w/Fangs_of_venenatis", "count": 1, "totalGp": 56949, "totalPoints": 1, "firstClaimAt": 1775459160000, "lastClaimAt": 1775459160000}, {"tileKey": "1773472770854", "taskId": 1773472770854, "name": "Skull of vet'ion", "image": "https://oldschool.runescape.wiki/images/thumb/Skull_of_vet%27ion_detail.png/240px-Skull_of_vet%27ion_detail.png?115b4", "category": "Combat", "categories": ["Combat"], "difficulty": "Easy", "wikiURL": "https://oldschool.runescape.wiki/w/Skull_of_vet%27ion", "count": 1, "totalGp": 54999, "totalPoints": 1, "firstClaimAt": 1774357620000, "lastClaimAt": 1774357620000}, {"tileKey": "1740105534461", "taskId": 1740105534461, "name": "pet", "image": "https://png.pngtree.com/png-clipart/20200224/original/pngtree-line-donkey-black-and-white-logo-abstract-drawing-of-png-image_5215825.jpg", "category": "Combat", "categories": ["Combat"], "difficulty": "Easy", "wikiURL": "", "count": 1, "totalGp": 0, "totalPoints": 1, "firstClaimAt": 1774398600000, "lastClaimAt": 1774398600000}], "pointsRank": 2, "draftValue": 10, "gpPerClaim": 6127736.93, "pointsPerClaim": 1.0}, {"key": "pinged", "displayName": "Pinged", "team": "Team 1", "teamColor": "#3d88eb", "isCaptain": false, "draftPick": 19, "preOvr": 78, "postOvr": 82, "preRank": 21, "postRank": 20, "rankSwing": 1, "deltaOvr": 4, "points": 4, "gp": 13029610, "claims": 4, "uniqueClaims": 4, "ehp": 5.3454, "ehb": 17.49016, "combat": 126, "totalLevel": 1965, "tiles": [{"tileKey": "1746046201844", "taskId": 1746046201844, "name": "Arcane prayer scroll", "image": "https://oldschool.runescape.wiki/images/thumb/Arcane_prayer_scroll_detail.png/240px-Arcane_prayer_scroll_detail.png?54108", "category": "Combat", "categories": ["Combat", "Loot Drop", "Raids"], "difficulty": "Easy", "wikiURL": "https://oldschool.runescape.wiki/w/Arcane_prayer_scroll", "count": 1, "totalGp": 4993427, "totalPoints": 1, "firstClaimAt": 1775112000000, "lastClaimAt": 1775112000000}, {"tileKey": "1746045673019", "taskId": 1746045673019, "name": "Magic fang", "image": "https://oldschool.runescape.wiki/images/thumb/Magic_fang_detail.png/240px-Magic_fang_detail.png?cd4e3", "category": "Combat", "categories": ["Combat", "Loot Drop", "Barrows"], "difficulty": "Easy", "wikiURL": "https://oldschool.runescape.wiki/w/Magic_fang", "count": 1, "totalGp": 3769999, "totalPoints": 1, "firstClaimAt": 1774751460000, "lastClaimAt": 1774751460000}, {"tileKey": "1743448073549", "taskId": 1743448073549, "name": "Elidinis' ward", "image": "https://oldschool.runescape.wiki/images/thumb/Elidinis%27_ward_detail.png/240px-Elidinis%27_ward_detail.png?df9a2", "category": "Gear", "categories": ["Gear"], "difficulty": "Easy", "wikiURL": "https://oldschool.runescape.wiki/w/Elidinis%27_ward", "count": 1, "totalGp": 3452748, "totalPoints": 1, "firstClaimAt": 1774855500000, "lastClaimAt": 1774855500000}, {"tileKey": "1740013603905", "taskId": 1740013603905, "name": "Seers ring", "image": "https://oldschool.runescape.wiki/images/thumb/Seers_ring_detail.png/240px-Seers_ring_detail.png?c8823", "category": "Gear", "categories": ["Gear"], "difficulty": "Easy", "wikiURL": "https://oldschool.runescape.wiki/w/Seers_ring", "count": 1, "totalGp": 813436, "totalPoints": 1, "firstClaimAt": 1774503540000, "lastClaimAt": 1774503540000}], "pointsRank": 19, "draftValue": 0, "gpPerClaim": 3257402.5, "pointsPerClaim": 1.0}, {"key": "clored", "displayName": "clored", "team": "Team 1", "teamColor": "#3d88eb", "isCaptain": false, "draftPick": 7, "preOvr": 83, "postOvr": 81, "preRank": 19, "postRank": 21, "rankSwing": -2, "deltaOvr": -2, "points": 2, "gp": 47754241, "claims": 2, "uniqueClaims": 2, "ehp": 1.43596, "ehb": 18.35915, "combat": 123, "totalLevel": 2030, "tiles": [{"tileKey": "1746046443396", "taskId": 1746046443396, "name": "Avernic defender hilt", "image": "https://oldschool.runescape.wiki/images/thumb/Avernic_defender_hilt_detail.png/240px-Avernic_defender_hilt_detail.png?6d350", "category": "Combat", "categories": ["Combat", "Raids"], "difficulty": "Easy", "wikiURL": "https://oldschool.runescape.wiki/w/Avernic_defender_hilt", "count": 1, "totalGp": 39000000, "totalPoints": 1, "firstClaimAt": 1774403880000, "lastClaimAt": 1774403880000}, {"tileKey": "1773472019209", "taskId": 1773472019209, "name": "Justiciar armour set", "image": "https://oldschool.runescape.wiki/images/thumb/Justiciar_armour_set_detail.png/240px-Justiciar_armour_set_detail.png?667a2", "category": "Combat", "categories": ["Combat"], "difficulty": "Easy", "wikiURL": "https://oldschool.runescape.wiki/w/Justiciar_armour_set", "count": 1, "totalGp": 11740018, "totalPoints": 1, "firstClaimAt": 1774481400000, "lastClaimAt": 1774481400000}], "pointsRank": 21, "draftValue": -14, "gpPerClaim": 23877120.5, "pointsPerClaim": 1.0}, {"key": "invadeherzim", "displayName": "invadeherzim", "team": "Team 3", "teamColor": "#05ff05", "isCaptain": false, "draftPick": 21, "preOvr": 71, "postOvr": 79, "preRank": 27, "postRank": 22, "rankSwing": 5, "deltaOvr": 8, "points": 7, "gp": 17414403, "claims": 7, "uniqueClaims": 7, "ehp": 8.64391, "ehb": 9.30108, "combat": 108, "totalLevel": 1913, "tiles": [{"tileKey": "1773467710240", "taskId": 1773467710240, "name": "Bottled storm", "image": "https://oldschool.runescape.wiki/images/thumb/Bottled_storm_detail.png/240px-Bottled_storm_detail.png?6fd35", "category": "Combat", "categories": ["Combat"], "difficulty": "Easy", "wikiURL": "https://oldschool.runescape.wiki/w/Bottled_storm", "count": 1, "totalGp": 11000000, "totalPoints": 1, "firstClaimAt": 1774493940000, "lastClaimAt": 1774493940000}, {"tileKey": "1741641839222", "taskId": 1741641839222, "name": "Draconic visage", "image": "https://oldschool.runescape.wiki/images/thumb/Draconic_visage_detail.png/240px-Draconic_visage_detail.png?6edab", "category": "Combat", "categories": ["Combat", "Loot Drop", "Bossing", "Slayer"], "difficulty": "Medium", "wikiURL": "https://oldschool.runescape.wiki/w/Draconic_visage", "count": 1, "totalGp": 3498188, "totalPoints": 1, "firstClaimAt": 1774989420000, "lastClaimAt": 1774989420000}, {"tileKey": "1741299861625", "taskId": 1741299861625, "name": "Abyssal whip", "image": "https://oldschool.runescape.wiki/images/thumb/Abyssal_whip_detail.png/240px-Abyssal_whip_detail.png?9aee6", "category": "Gear", "categories": ["Gear"], "difficulty": "Easy", "wikiURL": "https://oldschool.runescape.wiki/w/Abyssal_whip", "count": 1, "totalGp": 1198399, "totalPoints": 1, "firstClaimAt": 1774624740000, "lastClaimAt": 1774624740000}, {"tileKey": "1743457342463", "taskId": 1743457342463, "name": "Tome of fire", "image": "https://oldschool.runescape.wiki/images/thumb/Tome_of_fire_%28empty%29_detail.png/240px-Tome_of_fire_%28empty%29_detail.png?b9bae", "category": "Gear", "categories": ["Gear"], "difficulty": "Easy", "wikiURL": "https://oldschool.runescape.wiki/w/Tome_of_fire#Charged", "count": 1, "totalGp": 866306, "totalPoints": 1, "firstClaimAt": 1775104140000, "lastClaimAt": 1775104140000}, {"tileKey": "1773471790960", "taskId": 1773471790960, "name": "Verac's armour set", "image": "https://oldschool.runescape.wiki/images/thumb/Verac%27s_armour_set_detail.png/240px-Verac%27s_armour_set_detail.png?84fd4", "category": "Combat", "categories": ["Combat", "Barrows"], "difficulty": "Easy", "wikiURL": "https://oldschool.runescape.wiki/w/Verac%27s_armour_set", "count": 1, "totalGp": 779472, "totalPoints": 1, "firstClaimAt": 1774321920000, "lastClaimAt": 1774321920000}, {"tileKey": "25", "taskId": 25, "name": "Rev emblem", "image": "https://oldschool.runescape.wiki/images/thumb/Ancient_emblem_detail.png/240px-Ancient_emblem_detail.png?f448f", "category": "Other", "categories": ["Other", "Loot Drop", "Wilderness"], "difficulty": "Medium", "wikiURL": "https://oldschool.runescape.wiki/w/Ancient_emblem", "count": 1, "totalGp": 501234, "totalPoints": 1, "firstClaimAt": 1774367100000, "lastClaimAt": 1774367100000}, {"tileKey": "1746047699160", "taskId": 1746047699160, "name": "Drake's tooth", "image": "https://oldschool.runescape.wiki/images/thumb/Drake%27s_tooth_detail.png/240px-Drake%27s_tooth_detail.png?2eeff", "category": "Combat", "categories": ["Combat"], "difficulty": "Easy", "wikiURL": "https://oldschool.runescape.wiki/w/Drake%27s_tooth", "count": 1, "totalGp": 60003, "totalPoints": 1, "firstClaimAt": 1774901880000, "lastClaimAt": 1774901880000}], "pointsRank": 13, "draftValue": 8, "gpPerClaim": 2487771.86, "pointsPerClaim": 1.0}, {"key": "xviilxxvi", "displayName": "XVII LXXVI", "team": "Team 1", "teamColor": "#3d88eb", "isCaptain": false, "draftPick": 24, "preOvr": 77, "postOvr": 78, "preRank": 22, "postRank": 23, "rankSwing": -1, "deltaOvr": 1, "points": 10, "gp": 33863437, "claims": 10, "uniqueClaims": 10, "ehp": 2.04111, "ehb": 28.47838, "combat": 115, "totalLevel": 1834, "tiles": [{"tileKey": "1746045317556", "taskId": 1746045317556, "name": "Zamorak hilt", "image": "https://oldschool.runescape.wiki/images/thumb/Zamorak_hilt_detail.png/240px-Zamorak_hilt_detail.png?f52af", "category": "Combat", "categories": ["Combat", "Loot Drop", "Godwars", "Bossing"], "difficulty": "Easy", "wikiURL": "https://oldschool.runescape.wiki/w/Zamorak_hilt", "count": 1, "totalGp": 18557810, "totalPoints": 1, "firstClaimAt": 1774731540000, "lastClaimAt": 1774731540000}, {"tileKey": "1746045163636", "taskId": 1746045163636, "name": "Blood shard", "image": "https://oldschool.runescape.wiki/images/thumb/Blood_shard_detail.png/240px-Blood_shard_detail.png?2fbc7", "category": "Skilling", "categories": ["Skilling", "Loot Drop", "Slayer"], "difficulty": "Easy", "wikiURL": "https://oldschool.runescape.wiki/w/Blood_shard", "count": 1, "totalGp": 7800000, "totalPoints": 1, "firstClaimAt": 1774488900000, "lastClaimAt": 1774488900000}, {"tileKey": "1743447230153", "taskId": 1743447230153, "name": "Odium ward", "image": "https://oldschool.runescape.wiki/images/thumb/Odium_ward_detail.png/240px-Odium_ward_detail.png?49661", "category": "Gear", "categories": ["Gear", "Defense Required", "Slot: Off Hand"], "difficulty": "Easy", "wikiURL": "https://oldschool.runescape.wiki/w/Odium_ward", "count": 1, "totalGp": 3525688, "totalPoints": 1, "firstClaimAt": 1774564980000, "lastClaimAt": 1774564980000}, {"tileKey": "1740013653352", "taskId": 1740013653352, "name": "Archers ring", "image": "https://oldschool.runescape.wiki/images/thumb/Archers_ring_detail.png/240px-Archers_ring_detail.png?4eab1", "category": "Gear", "categories": ["Gear"], "difficulty": "Easy", "wikiURL": "https://oldschool.runescape.wiki/w/Archers_ring", "count": 1, "totalGp": 2729965, "totalPoints": 1, "firstClaimAt": 1775455380000, "lastClaimAt": 1775455380000}, {"tileKey": "1773471618184", "taskId": 1773471618184, "name": "Eclipse moon armour set", "image": "https://oldschool.runescape.wiki/images/thumb/Eclipse_moon_armour_set_detail.png/240px-Eclipse_moon_armour_set_detail.png?e0c4a", "category": "Combat", "categories": ["Combat"], "difficulty": "Easy", "wikiURL": "https://oldschool.runescape.wiki/w/Eclipse_moon_armour_set", "count": 1, "totalGp": 1918000, "totalPoints": 1, "firstClaimAt": 1774325520000, "lastClaimAt": 1774325520000}, {"tileKey": "1773471720211", "taskId": 1773471720211, "name": "Ahrim's armour set", "image": "https://oldschool.runescape.wiki/images/thumb/Ahrim%27s_armour_set_detail.png/240px-Ahrim%27s_armour_set_detail.png?e97a1", "category": "Combat", "categories": ["Combat", "Barrows"], "difficulty": "Easy", "wikiURL": "https://oldschool.runescape.wiki/w/Ahrim%27s_armour_set", "count": 1, "totalGp": 1855747, "totalPoints": 1, "firstClaimAt": 1774317540000, "lastClaimAt": 1774317540000}, {"tileKey": "1746049002347", "taskId": 1746049002347, "name": "Zamorakian spear", "image": "https://oldschool.runescape.wiki/images/thumb/Zamorakian_spear_detail.png/240px-Zamorakian_spear_detail.png?29623", "category": "Gear", "categories": ["Gear"], "difficulty": "Easy", "wikiURL": "https://oldschool.runescape.wiki/w/Zamorakian_spear", "count": 1, "totalGp": 1207934, "totalPoints": 1, "firstClaimAt": 1774722960000, "lastClaimAt": 1774722960000}, {"tileKey": "1746047715947", "taskId": 1746047715947, "name": "Drake's claw", "image": "https://oldschool.runescape.wiki/images/thumb/Drake%27s_claw_detail.png/240px-Drake%27s_claw_detail.png?5aa87", "category": "Combat", "categories": ["Combat"], "difficulty": "Easy", "wikiURL": "https://oldschool.runescape.wiki/w/Drake%27s_claw", "count": 1, "totalGp": 326439, "totalPoints": 1, "firstClaimAt": 1774930440000, "lastClaimAt": 1774930440000}, {"tileKey": "1746138705097", "taskId": 1746138705097, "name": "Sarachnis cudgel", "image": "https://oldschool.runescape.wiki/images/thumb/Sarachnis_cudgel_detail.png/240px-Sarachnis_cudgel_detail.png?f9ce8", "category": "Gear", "categories": ["Gear"], "difficulty": "Easy", "wikiURL": "https://oldschool.runescape.wiki/w/Sarachnis_cudgel", "count": 1, "totalGp": 275000, "totalPoints": 1, "firstClaimAt": 1774496700000, "lastClaimAt": 1774496700000}, {"tileKey": "1746047699160", "taskId": 1746047699160, "name": "Drake's tooth", "image": "https://oldschool.runescape.wiki/images/thumb/Drake%27s_tooth_detail.png/240px-Drake%27s_tooth_detail.png?2eeff", "category": "Combat", "categories": ["Combat"], "difficulty": "Easy", "wikiURL": "https://oldschool.runescape.wiki/w/Drake%27s_tooth", "count": 1, "totalGp": 60003, "totalPoints": 1, "firstClaimAt": 1774665360000, "lastClaimAt": 1774665360000}], "pointsRank": 6, "draftValue": 18, "gpPerClaim": 3386343.7, "pointsPerClaim": 1.0}, {"key": "aeyriev", "displayName": "aeyrie v", "team": "Team 3", "teamColor": "#05ff05", "isCaptain": false, "draftPick": 16, "preOvr": 76, "postOvr": 77, "preRank": 24, "postRank": 24, "rankSwing": 0, "deltaOvr": 1, "points": 6, "gp": 52326752, "claims": 6, "uniqueClaims": 6, "ehp": 4.62874, "ehb": 10.17768, "combat": 112, "totalLevel": 1933, "tiles": [{"tileKey": "1741641506866", "taskId": 1741641506866, "name": "Armadyl crossbow", "image": "https://oldschool.runescape.wiki/images/thumb/Armadyl_crossbow_detail.png/240px-Armadyl_crossbow_detail.png?de091", "category": "Gear", "categories": ["Gear"], "difficulty": "Easy", "wikiURL": "https://oldschool.runescape.wiki/w/Armadyl_crossbow", "count": 1, "totalGp": 31999995, "totalPoints": 1, "firstClaimAt": 1774773180000, "lastClaimAt": 1774773180000}, {"tileKey": "1741641560248", "taskId": 1741641560248, "name": "Bandos tassets", "image": "https://oldschool.runescape.wiki/images/thumb/Bandos_tassets_detail.png/240px-Bandos_tassets_detail.png?abaeb", "category": "Gear", "categories": ["Gear"], "difficulty": "Easy", "wikiURL": "https://oldschool.runescape.wiki/w/Bandos_tassets", "count": 1, "totalGp": 16000000, "totalPoints": 1, "firstClaimAt": 1774673400000, "lastClaimAt": 1774673400000}, {"tileKey": "1742320745127", "taskId": 1742320745127, "name": "Mage's book", "image": "https://oldschool.runescape.wiki/images/thumb/Mage%27s_book_detail.png/240px-Mage%27s_book_detail.png?55fdd", "category": "Gear", "categories": ["Gear"], "difficulty": "Easy", "wikiURL": "https://oldschool.runescape.wiki/w/Mage%27s_book", "count": 1, "totalGp": 3770849, "totalPoints": 1, "firstClaimAt": 1774370700000, "lastClaimAt": 1774370700000}, {"tileKey": "1773471760804", "taskId": 1773471760804, "name": "Karil's armour set", "image": "https://oldschool.runescape.wiki/images/thumb/Karil%27s_armour_set_detail.png/240px-Karil%27s_armour_set_detail.png?667a2", "category": "Combat", "categories": ["Combat", "Barrows"], "difficulty": "Easy", "wikiURL": "https://oldschool.runescape.wiki/w/Karil%27s_armour_set", "count": 1, "totalGp": 2128199, "totalPoints": 1, "firstClaimAt": 1774891320000, "lastClaimAt": 1774891320000}, {"tileKey": "1773471746998", "taskId": 1773471746998, "name": "Guthan's armour set", "image": "https://oldschool.runescape.wiki/images/thumb/Guthan%27s_armour_set_detail.png/240px-Guthan%27s_armour_set_detail.png?0ff52", "category": "Combat", "categories": ["Combat", "Barrows"], "difficulty": "Easy", "wikiURL": "https://oldschool.runescape.wiki/w/Guthan%27s_armour_set", "count": 1, "totalGp": 790000, "totalPoints": 1, "firstClaimAt": 1774909800000, "lastClaimAt": 1774909800000}, {"tileKey": "1743443728212", "taskId": 1743443728212, "name": "Dragon chainbody", "image": "https://oldschool.runescape.wiki/images/thumb/Dragon_chainbody_detail.png/240px-Dragon_chainbody_detail.png?35048", "category": "Gear", "categories": ["Gear"], "difficulty": "Easy", "wikiURL": "https://oldschool.runescape.wiki/w/Dragon_chainbody", "count": 1, "totalGp": 291481, "totalPoints": 1, "firstClaimAt": 1774740000000, "lastClaimAt": 1774740000000}], "pointsRank": 14, "draftValue": 2, "gpPerClaim": 8721125.33, "pointsPerClaim": 1.0}, {"key": "lailipop", "displayName": "lailipop", "team": "Team 2", "teamColor": "#e60017", "isCaptain": false, "draftPick": 26, "preOvr": 72, "postOvr": 76, "preRank": 26, "postRank": 25, "rankSwing": 1, "deltaOvr": 4, "points": 10, "gp": 17712057, "claims": 10, "uniqueClaims": 10, "ehp": 6.77252, "ehb": 14.99624, "combat": 102, "totalLevel": 2024, "tiles": [{"tileKey": "1741641348642", "taskId": 1741641348642, "name": "Voidwaker hilt", "image": "https://oldschool.runescape.wiki/images/thumb/Voidwaker_hilt_detail.png/240px-Voidwaker_hilt_detail.png?01835", "category": "Combat", "categories": ["Combat", "Loot Drop", "Wilderness"], "difficulty": "Easy", "wikiURL": "https://oldschool.runescape.wiki/w/Voidwaker_hilt", "count": 1, "totalGp": 6750303, "totalPoints": 1, "firstClaimAt": 1775063160000, "lastClaimAt": 1775063160000}, {"tileKey": "1742320745127", "taskId": 1742320745127, "name": "Mage's book", "image": "https://oldschool.runescape.wiki/images/thumb/Mage%27s_book_detail.png/240px-Mage%27s_book_detail.png?55fdd", "category": "Gear", "categories": ["Gear"], "difficulty": "Easy", "wikiURL": "https://oldschool.runescape.wiki/w/Mage%27s_book", "count": 1, "totalGp": 3770849, "totalPoints": 1, "firstClaimAt": 1774310880000, "lastClaimAt": 1774310880000}, {"tileKey": "1740013539457", "taskId": 1740013539457, "name": "Berserker ring", "image": "https://oldschool.runescape.wiki/images/thumb/Berserker_ring_detail.png/240px-Berserker_ring_detail.png?81f8b", "category": "Gear", "categories": ["Gear"], "difficulty": "Easy", "wikiURL": "https://oldschool.runescape.wiki/w/Berserker_ring", "count": 1, "totalGp": 3219000, "totalPoints": 1, "firstClaimAt": 1774584180000, "lastClaimAt": 1774584180000}, {"tileKey": "26", "taskId": 26, "name": "Hill giant club", "image": "https://oldschool.runescape.wiki/images/thumb/Hill_giant_club_detail.png/240px-Hill_giant_club_detail.png?53073", "category": "Gear", "categories": ["Gear"], "difficulty": "Easy", "wikiURL": "https://oldschool.runescape.wiki/w/Hill_giant_club", "count": 1, "totalGp": 1215767, "totalPoints": 1, "firstClaimAt": 1774324800000, "lastClaimAt": 1774324800000}, {"tileKey": "1740013694124", "taskId": 1740013694124, "name": "Ring of the gods", "image": "https://oldschool.runescape.wiki/images/thumb/Ring_of_the_gods_detail.png/240px-Ring_of_the_gods_detail.png?4a4e9", "category": "Gear", "categories": ["Gear"], "difficulty": "Easy", "wikiURL": "https://oldschool.runescape.wiki/w/Ring_of_the_gods", "count": 1, "totalGp": 991940, "totalPoints": 1, "firstClaimAt": 1774681920000, "lastClaimAt": 1774681920000}, {"tileKey": "1743457342463", "taskId": 1743457342463, "name": "Tome of fire", "image": "https://oldschool.runescape.wiki/images/thumb/Tome_of_fire_%28empty%29_detail.png/240px-Tome_of_fire_%28empty%29_detail.png?b9bae", "category": "Gear", "categories": ["Gear"], "difficulty": "Easy", "wikiURL": "https://oldschool.runescape.wiki/w/Tome_of_fire#Charged", "count": 1, "totalGp": 866306, "totalPoints": 1, "firstClaimAt": 1774311000000, "lastClaimAt": 1774311000000}, {"tileKey": "1743457416620", "taskId": 1743457416620, "name": "Tome of water", "image": "https://oldschool.runescape.wiki/images/thumb/Tome_of_water_%28empty%29_detail.png/240px-Tome_of_water_%28empty%29_detail.png?2502c", "category": "Gear", "categories": ["Gear"], "difficulty": "Easy", "wikiURL": "https://oldschool.runescape.wiki/w/Tome_of_water#Charged", "count": 1, "totalGp": 407487, "totalPoints": 1, "firstClaimAt": 1774662420000, "lastClaimAt": 1774662420000}, {"tileKey": "1746047715947", "taskId": 1746047715947, "name": "Drake's claw", "image": "https://oldschool.runescape.wiki/images/thumb/Drake%27s_claw_detail.png/240px-Drake%27s_claw_detail.png?5aa87", "category": "Combat", "categories": ["Combat"], "difficulty": "Easy", "wikiURL": "https://oldschool.runescape.wiki/w/Drake%27s_claw", "count": 1, "totalGp": 326439, "totalPoints": 1, "firstClaimAt": 1775403180000, "lastClaimAt": 1775403180000}, {"tileKey": "1740013954131", "taskId": 1740013954131, "name": "Treasonous ring", "image": "https://oldschool.runescape.wiki/images/thumb/Treasonous_ring_detail.png/240px-Treasonous_ring_detail.png?859ba", "category": "Gear", "categories": ["Gear"], "difficulty": "Easy", "wikiURL": "https://oldschool.runescape.wiki/w/Treasonous_ring", "count": 1, "totalGp": 91115, "totalPoints": 1, "firstClaimAt": 1775020200000, "lastClaimAt": 1775020200000}, {"tileKey": "1740013578625", "taskId": 1740013578625, "name": "Warrior ring", "image": "https://oldschool.runescape.wiki/images/thumb/Warrior_ring_detail.png/240px-Warrior_ring_detail.png?4a4e9", "category": "Gear", "categories": ["Gear"], "difficulty": "Easy", "wikiURL": "https://oldschool.runescape.wiki/w/Warrior_ring", "count": 1, "totalGp": 72851, "totalPoints": 1, "firstClaimAt": 1774814760000, "lastClaimAt": 1774814760000}], "pointsRank": 8, "draftValue": 18, "gpPerClaim": 1771205.7, "pointsPerClaim": 1.0}, {"key": "jennifer", "displayName": "J ennifer", "team": "Team 3", "teamColor": "#05ff05", "isCaptain": false, "draftPick": 10, "preOvr": 76, "postOvr": 75, "preRank": 23, "postRank": 26, "rankSwing": -3, "deltaOvr": -1, "points": 8, "gp": 27479813, "claims": 8, "uniqueClaims": 8, "ehp": 0.25241, "ehb": 9.41449, "combat": 123, "totalLevel": 2017, "tiles": [{"tileKey": "1746046184183", "taskId": 1746046184183, "name": "Dexterous prayer scroll", "image": "https://oldschool.runescape.wiki/images/thumb/Dexterous_prayer_scroll_detail.png/240px-Dexterous_prayer_scroll_detail.png?d6a6b", "category": "Combat", "categories": ["Combat", "Loot Drop", "Raids"], "difficulty": "Easy", "wikiURL": "https://oldschool.runescape.wiki/w/Dexterous_prayer_scroll", "count": 1, "totalGp": 19353609, "totalPoints": 1, "firstClaimAt": 1774858200000, "lastClaimAt": 1774858200000}, {"tileKey": "1741641348642", "taskId": 1741641348642, "name": "Voidwaker hilt", "image": "https://oldschool.runescape.wiki/images/thumb/Voidwaker_hilt_detail.png/240px-Voidwaker_hilt_detail.png?01835", "category": "Combat", "categories": ["Combat", "Loot Drop", "Wilderness"], "difficulty": "Easy", "wikiURL": "https://oldschool.runescape.wiki/w/Voidwaker_hilt", "count": 1, "totalGp": 6750303, "totalPoints": 1, "firstClaimAt": 1775110920000, "lastClaimAt": 1775110920000}, {"tileKey": "1773472035391", "taskId": 1773472035391, "name": "Dagon'hai robes set", "image": "https://oldschool.runescape.wiki/images/thumb/Dagon%27hai_robes_set_detail.png/240px-Dagon%27hai_robes_set_detail.png?6b4ec", "category": "Combat", "categories": ["Combat"], "difficulty": "Easy", "wikiURL": "https://oldschool.runescape.wiki/w/Dagon%27hai_robes_set", "count": 1, "totalGp": 1419773, "totalPoints": 1, "firstClaimAt": 1774319100000, "lastClaimAt": 1774319100000}, {"tileKey": "1742429594489", "taskId": 1742429594489, "name": "Dragon pickaxe", "image": "https://oldschool.runescape.wiki/images/thumb/Dragon_pickaxe_detail.png/240px-Dragon_pickaxe_detail.png?4f4ee", "category": "Gear", "categories": ["Gear"], "difficulty": "Easy", "wikiURL": "https://oldschool.runescape.wiki/w/Dragon_pickaxe", "count": 1, "totalGp": 459989, "totalPoints": 1, "firstClaimAt": 1774415280000, "lastClaimAt": 1774415280000}, {"tileKey": "1740013971839", "taskId": 1740013971839, "name": "Tyrannical ring", "image": "https://oldschool.runescape.wiki/images/thumb/Tyrannical_ring_detail.png/240px-Tyrannical_ring_detail.png?36d00", "category": "Gear", "categories": ["Gear"], "difficulty": "Easy", "wikiURL": "https://oldschool.runescape.wiki/w/Tyrannical_ring", "count": 1, "totalGp": 273525, "totalPoints": 1, "firstClaimAt": 1774986540000, "lastClaimAt": 1774986540000}, {"tileKey": "17", "taskId": 17, "name": "Elder chaos robe piece", "image": "https://oldschool.runescape.wiki/images/thumb/Elder_chaos_druid_robes_equipped_male.png/120px-Elder_chaos_druid_robes_equipped_male.png?27e58", "category": "Other", "categories": ["Other", "Gear", "1 Defense", "Loot Drop", "Wilderness", "Slot: Legs"], "difficulty": "Medium", "wikiURL": "https://oldschool.runescape.wiki/w/Elder_chaos_robe", "count": 1, "totalGp": 157736, "totalPoints": 1, "firstClaimAt": 1774318260000, "lastClaimAt": 1774318260000}, {"tileKey": "1742429789106", "taskId": 1742429789106, "name": "Dragon 2h sword", "image": "https://oldschool.runescape.wiki/images/thumb/Dragon_2h_sword_detail.png/240px-Dragon_2h_sword_detail.png?6ed9d", "category": "Gear", "categories": ["Gear"], "difficulty": "Easy", "wikiURL": "https://oldschool.runescape.wiki/w/Dragon_2h_sword", "count": 1, "totalGp": 131713, "totalPoints": 1, "firstClaimAt": 1774320960000, "lastClaimAt": 1774320960000}, {"tileKey": "1773472724610", "taskId": 1773472724610, "name": "Claws of callisto", "image": "https://oldschool.runescape.wiki/images/thumb/Claws_of_callisto_detail.png/240px-Claws_of_callisto_detail.png?bb22e", "category": "Combat", "categories": ["Combat"], "difficulty": "Easy", "wikiURL": "https://oldschool.runescape.wiki/w/Claws_of_callisto", "count": 1, "totalGp": 53312, "totalPoints": 1, "firstClaimAt": 1774730820000, "lastClaimAt": 1774730820000}], "pointsRank": 11, "draftValue": -1, "gpPerClaim": 3434976.62, "pointsPerClaim": 1.0}, {"key": "dcma8r", "displayName": "dc ma8r", "team": "Team 2", "teamColor": "#e60017", "isCaptain": false, "draftPick": 23, "preOvr": 75, "postOvr": 74, "preRank": 25, "postRank": 27, "rankSwing": -2, "deltaOvr": -1, "points": 2, "gp": 17462000, "claims": 2, "uniqueClaims": 2, "ehp": 4.55278, "ehb": 0.12, "combat": 100, "totalLevel": 1871, "tiles": [{"tileKey": "1741641640291", "taskId": 1741641640291, "name": "Zenyte shard", "image": "https://oldschool.runescape.wiki/images/thumb/Zenyte_shard_detail.png/240px-Zenyte_shard_detail.png?c5a63", "category": "Combat", "categories": ["Combat", "Loot Drop", "Bossing"], "difficulty": "Easy", "wikiURL": "https://oldschool.runescape.wiki/w/Zenyte_shard", "count": 1, "totalGp": 17187000, "totalPoints": 1, "firstClaimAt": 1774845780000, "lastClaimAt": 1774845780000}, {"tileKey": "1746138705097", "taskId": 1746138705097, "name": "Sarachnis cudgel", "image": "https://oldschool.runescape.wiki/images/thumb/Sarachnis_cudgel_detail.png/240px-Sarachnis_cudgel_detail.png?f9ce8", "category": "Gear", "categories": ["Gear"], "difficulty": "Easy", "wikiURL": "https://oldschool.runescape.wiki/w/Sarachnis_cudgel", "count": 1, "totalGp": 275000, "totalPoints": 1, "firstClaimAt": 1774318140000, "lastClaimAt": 1774318140000}], "pointsRank": 22, "draftValue": 1, "gpPerClaim": 8731000.0, "pointsPerClaim": 1.0}, {"key": "shazzzzzy", "displayName": "Shazzzzzy", "team": "Team 1", "teamColor": "#3d88eb", "isCaptain": false, "draftPick": 25, "preOvr": 68, "postOvr": 70, "preRank": 28, "postRank": 28, "rankSwing": 0, "deltaOvr": 2, "points": 9, "gp": 84889696, "claims": 9, "uniqueClaims": 9, "ehp": 7.1288, "ehb": 8.16333, "combat": 122, "totalLevel": 1886, "tiles": [{"tileKey": "1746058361192", "taskId": 1746058361192, "name": "Tormented synapse", "image": "https://oldschool.runescape.wiki/images/thumb/Tormented_synapse_detail.png/240px-Tormented_synapse_detail.png?27153", "category": "Combat", "categories": ["Combat"], "difficulty": "Easy", "wikiURL": "https://oldschool.runescape.wiki/w/Tormented_synapse", "count": 1, "totalGp": 38878278, "totalPoints": 1, "firstClaimAt": 1774993920000, "lastClaimAt": 1774993920000}, {"tileKey": "1773467669297", "taskId": 1773467669297, "name": "Broken dragon hook", "image": "https://oldschool.runescape.wiki/images/thumb/Broken_dragon_hook_detail.png/240px-Broken_dragon_hook_detail.png?6966e", "category": "Combat", "categories": ["Combat"], "difficulty": "Easy", "wikiURL": "https://oldschool.runescape.wiki/w/Broken_dragon_hook", "count": 1, "totalGp": 19245000, "totalPoints": 1, "firstClaimAt": 1774490220000, "lastClaimAt": 1774490220000}, {"tileKey": "1773467710240", "taskId": 1773467710240, "name": "Bottled storm", "image": "https://oldschool.runescape.wiki/images/thumb/Bottled_storm_detail.png/240px-Bottled_storm_detail.png?6fd35", "category": "Combat", "categories": ["Combat"], "difficulty": "Easy", "wikiURL": "https://oldschool.runescape.wiki/w/Bottled_storm", "count": 1, "totalGp": 11000000, "totalPoints": 1, "firstClaimAt": 1774412160000, "lastClaimAt": 1774412160000}, {"tileKey": "1746045268387", "taskId": 1746045268387, "name": "Armadyl hilt", "image": "https://oldschool.runescape.wiki/images/thumb/Armadyl_hilt_detail.png/240px-Armadyl_hilt_detail.png?3b950", "category": "Loot Drop", "categories": ["Loot Drop", "Godwars", "Bossing"], "difficulty": "Easy", "wikiURL": "https://oldschool.runescape.wiki/w/Armadyl_hilt", "count": 1, "totalGp": 7965069, "totalPoints": 1, "firstClaimAt": 1774574400000, "lastClaimAt": 1774574400000}, {"tileKey": "1746058382028", "taskId": 1746058382028, "name": "Burning claw", "image": "https://oldschool.runescape.wiki/images/thumb/Burning_claw_detail.png/240px-Burning_claw_detail.png?bde46", "category": "Combat", "categories": ["Combat"], "difficulty": "Easy", "wikiURL": "https://oldschool.runescape.wiki/w/Burning_claw", "count": 1, "totalGp": 3226641, "totalPoints": 1, "firstClaimAt": 1775503140000, "lastClaimAt": 1775503140000}, {"tileKey": "1742429638184", "taskId": 1742429638184, "name": "Dragon harpoon", "image": "https://oldschool.runescape.wiki/images/thumb/Dragon_harpoon_detail.png/240px-Dragon_harpoon_detail.png?b14b9", "category": "Gear", "categories": ["Gear"], "difficulty": "Easy", "wikiURL": "https://oldschool.runescape.wiki/w/Dragon_harpoon", "count": 1, "totalGp": 3116708, "totalPoints": 1, "firstClaimAt": 1775253480000, "lastClaimAt": 1775253480000}, {"tileKey": "1773471760804", "taskId": 1773471760804, "name": "Karil's armour set", "image": "https://oldschool.runescape.wiki/images/thumb/Karil%27s_armour_set_detail.png/240px-Karil%27s_armour_set_detail.png?667a2", "category": "Combat", "categories": ["Combat", "Barrows"], "difficulty": "Easy", "wikiURL": "https://oldschool.runescape.wiki/w/Karil%27s_armour_set", "count": 1, "totalGp": 2128199, "totalPoints": 1, "firstClaimAt": 1774562460000, "lastClaimAt": 1774562460000}, {"tileKey": "1746128826034", "taskId": 1746128826034, "name": "Dragon limbs", "image": "https://oldschool.runescape.wiki/images/thumb/Dragon_limbs_detail.png/240px-Dragon_limbs_detail.png?e3ed5", "category": "Combat", "categories": ["Combat"], "difficulty": "Easy", "wikiURL": "https://oldschool.runescape.wiki/w/Dragon_limbs", "count": 1, "totalGp": 700000, "totalPoints": 1, "firstClaimAt": 1774384500000, "lastClaimAt": 1774384500000}, {"tileKey": "1746046297014", "taskId": 1746046297014, "name": "Tome of earth", "image": "https://oldschool.runescape.wiki/images/thumb/Tome_of_earth_%28empty%29_detail.png/240px-Tome_of_earth_%28empty%29_detail.png?175ef", "category": "Gear", "categories": ["Gear"], "difficulty": "Easy", "wikiURL": "https://oldschool.runescape.wiki/w/Tome_of_earth#Charged", "count": 1, "totalGp": 650000, "totalPoints": 1, "firstClaimAt": 1774760100000, "lastClaimAt": 1774760100000}], "pointsRank": 9, "draftValue": 16, "gpPerClaim": 9432188.44, "pointsPerClaim": 1.0}, {"key": "sto3pt3g3l", "displayName": "sto3pt3g3l", "team": "Team 3", "teamColor": "#05ff05", "isCaptain": false, "draftPick": 27, "preOvr": 68, "postOvr": 70, "preRank": 29, "postRank": 29, "rankSwing": 0, "deltaOvr": 2, "points": 2, "gp": 1206450, "claims": 2, "uniqueClaims": 2, "ehp": 1.1417, "ehb": 0.1375, "combat": 81, "totalLevel": 1914, "tiles": [{"tileKey": "1743447230153", "taskId": 1743447230153, "name": "Odium ward", "image": "https://oldschool.runescape.wiki/images/thumb/Odium_ward_detail.png/240px-Odium_ward_detail.png?49661", "category": "Gear", "categories": ["Gear", "Defense Required", "Slot: Off Hand"], "difficulty": "Easy", "wikiURL": "https://oldschool.runescape.wiki/w/Odium_ward", "count": 1, "totalGp": 3525688, "totalPoints": 1, "firstClaimAt": 1774354200000, "lastClaimAt": 1774354200000}, {"tileKey": "1743447494801", "taskId": 1743447494801, "name": "Malediction ward", "image": "https://oldschool.runescape.wiki/images/thumb/Malediction_ward_detail.png/240px-Malediction_ward_detail.png?c708e", "category": "Gear", "categories": ["Gear", "1 Defense", "Slot: Off Hand"], "difficulty": "Easy", "wikiURL": "https://oldschool.runescape.wiki/w/Malediction_ward", "count": 1, "totalGp": 1888648, "totalPoints": 1, "firstClaimAt": 1774780980000, "lastClaimAt": 1774780980000}], "pointsRank": 25, "draftValue": 2, "gpPerClaim": 603225.0, "pointsPerClaim": 1.0}, {"key": "letha1nox", "displayName": "Letha1Nox", "team": "Team 3", "teamColor": "#05ff05", "isCaptain": false, "draftPick": 22, "preOvr": 64, "postOvr": 64, "preRank": 30, "postRank": 30, "rankSwing": 0, "deltaOvr": 0, "points": 1, "gp": 331109, "claims": 1, "uniqueClaims": 1, "ehp": 0.0, "ehb": 0.0, "combat": 102, "totalLevel": 1469, "tiles": [{"tileKey": "1773471720211", "taskId": 1773471720211, "name": "Ahrim's armour set", "image": "https://oldschool.runescape.wiki/images/thumb/Ahrim%27s_armour_set_detail.png/240px-Ahrim%27s_armour_set_detail.png?e97a1", "category": "Combat", "categories": ["Combat", "Barrows"], "difficulty": "Easy", "wikiURL": "https://oldschool.runescape.wiki/w/Ahrim%27s_armour_set", "count": 1, "totalGp": 1855747, "totalPoints": 1, "firstClaimAt": 1774425540000, "lastClaimAt": 1774425540000}], "pointsRank": 26, "draftValue": -4, "gpPerClaim": 331109.0, "pointsPerClaim": 1.0}], "teams": [{"name": "Team 1", "color": "#3d88eb", "captain": "LunarTheCat", "preAvg": 85.1, "postAvg": 85.8, "deltaAvg": 0.7, "points": 89, "gp": 842169253, "claims": 89, "ehp": 46.78, "ehb": 202.19, "members": [{"name": "LunarTheCat", "key": "lunarthecat", "draftPick": null, "preOvr": 98, "postOvr": 99, "deltaOvr": 1, "points": 12, "gp": 339237294, "claims": 12, "isCaptain": true, "postRank": 3, "teamColor": "#3d88eb", "ehp": 8.54825, "ehb": 37.50077, "uniqueClaims": 12}, {"name": "L aws", "key": "laws", "draftPick": 1, "preOvr": 99, "postOvr": 99, "deltaOvr": 0, "points": 11, "gp": 180352456, "claims": 11, "isCaptain": false, "postRank": 2, "teamColor": "#3d88eb", "ehp": 5.2711, "ehb": 15.07683, "uniqueClaims": 11}, {"name": "Throat_Tity", "key": "throattity", "draftPick": 6, "preOvr": 93, "postOvr": 93, "deltaOvr": 0, "points": 10, "gp": 21097546, "claims": 10, "isCaptain": false, "postRank": 7, "teamColor": "#3d88eb", "ehp": 3.26815, "ehb": 43.23395, "uniqueClaims": 10}, {"name": "clored", "key": "clored", "draftPick": 7, "preOvr": 83, "postOvr": 81, "deltaOvr": -2, "points": 2, "gp": 47754241, "claims": 2, "isCaptain": false, "postRank": 21, "teamColor": "#3d88eb", "ehp": 1.43596, "ehb": 18.35915, "uniqueClaims": 2}, {"name": "ComonProject", "key": "comonproject", "draftPick": 12, "preOvr": 81, "postOvr": 82, "deltaOvr": 1, "points": 14, "gp": 85788317, "claims": 14, "isCaptain": false, "postRank": 19, "teamColor": "#3d88eb", "ehp": 0.24109, "ehb": 10.80357, "uniqueClaims": 14}, {"name": "Yalet0wn", "key": "yalet0wn", "draftPick": 13, "preOvr": 86, "postOvr": 86, "deltaOvr": 0, "points": 8, "gp": 16988961, "claims": 8, "isCaptain": false, "postRank": 15, "teamColor": "#3d88eb", "ehp": 0.57197, "ehb": 1.69645, "uniqueClaims": 8}, {"name": "alwaysplankn", "key": "alwaysplankn", "draftPick": 18, "preOvr": 88, "postOvr": 88, "deltaOvr": 0, "points": 9, "gp": 19167695, "claims": 9, "isCaptain": false, "postRank": 13, "teamColor": "#3d88eb", "ehp": 12.92864, "ehb": 21.3853, "uniqueClaims": 9}, {"name": "Pinged", "key": "pinged", "draftPick": 19, "preOvr": 78, "postOvr": 82, "deltaOvr": 4, "points": 4, "gp": 13029610, "claims": 4, "isCaptain": false, "postRank": 20, "teamColor": "#3d88eb", "ehp": 5.3454, "ehb": 17.49016, "uniqueClaims": 4}, {"name": "XVII LXXVI", "key": "xviilxxvi", "draftPick": 24, "preOvr": 77, "postOvr": 78, "deltaOvr": 1, "points": 10, "gp": 33863437, "claims": 10, "isCaptain": false, "postRank": 23, "teamColor": "#3d88eb", "ehp": 2.04111, "ehb": 28.47838, "uniqueClaims": 10}, {"name": "Shazzzzzy", "key": "shazzzzzy", "draftPick": 25, "preOvr": 68, "postOvr": 70, "deltaOvr": 2, "points": 9, "gp": 84889696, "claims": 9, "isCaptain": false, "postRank": 28, "teamColor": "#3d88eb", "ehp": 7.1288, "ehb": 8.16333, "uniqueClaims": 9}], "postStandRank": 1}, {"name": "Team 2", "color": "#e60017", "captain": "99Broke", "preAvg": 86.9, "postAvg": 87.2, "deltaAvg": 0.3, "points": 84, "gp": 691573723, "claims": 84, "ehp": 46.88, "ehb": 166.59, "members": [{"name": "99Broke", "key": "99broke", "draftPick": null, "preOvr": 97, "postOvr": 97, "deltaOvr": 0, "points": 14, "gp": 249783161, "claims": 14, "isCaptain": true, "postRank": 4, "teamColor": "#e60017", "ehp": 2.44806, "ehb": 54.39287, "uniqueClaims": 14}, {"name": "Mr Samer", "key": "mrsamer", "draftPick": 2, "preOvr": 93, "postOvr": 94, "deltaOvr": 1, "points": 19, "gp": 146136318, "claims": 19, "isCaptain": false, "postRank": 5, "teamColor": "#e60017", "ehp": 2.72773, "ehb": 36.92383, "uniqueClaims": 19}, {"name": "Huzmirk", "key": "huzmirk", "draftPick": 5, "preOvr": 99, "postOvr": 99, "deltaOvr": 0, "points": 3, "gp": 12988532, "claims": 3, "isCaptain": false, "postRank": 1, "teamColor": "#e60017", "ehp": 5.90818, "ehb": 8.31913, "uniqueClaims": 3}, {"name": "NCDJ 7", "key": "ncdj7", "draftPick": 8, "preOvr": 84, "postOvr": 83, "deltaOvr": -1, "points": 10, "gp": 45453442, "claims": 10, "isCaptain": false, "postRank": 17, "teamColor": "#e60017", "ehp": 12.95924, "ehb": 28.74781, "uniqueClaims": 10}, {"name": "DcStepNegro", "key": "dcstepnegro", "draftPick": 11, "preOvr": 83, "postOvr": 83, "deltaOvr": 0, "points": 6, "gp": 8904955, "claims": 6, "isCaptain": false, "postRank": 18, "teamColor": "#e60017", "ehp": 7.86617, "ehb": 11.86472, "uniqueClaims": 6}, {"name": "dutch arb", "key": "dutcharb", "draftPick": 14, "preOvr": 93, "postOvr": 93, "deltaOvr": 0, "points": 5, "gp": 67695109, "claims": 5, "isCaptain": false, "postRank": 6, "teamColor": "#e60017", "ehp": 1.72806, "ehb": 7.13175, "uniqueClaims": 5}, {"name": "hary nuhtsac", "key": "harynuhtsac", "draftPick": 17, "preOvr": 90, "postOvr": 90, "deltaOvr": 0, "points": 2, "gp": 6594576, "claims": 2, "isCaptain": false, "postRank": 10, "teamColor": "#e60017", "ehp": 0.02075, "ehb": 0.08812, "uniqueClaims": 2}, {"name": "Rhedeem", "key": "rhedeem", "draftPick": 20, "preOvr": 83, "postOvr": 83, "deltaOvr": 0, "points": 13, "gp": 118843573, "claims": 13, "isCaptain": false, "postRank": 16, "teamColor": "#e60017", "ehp": 1.90029, "ehb": 4.00982, "uniqueClaims": 13}, {"name": "dc ma8r", "key": "dcma8r", "draftPick": 23, "preOvr": 75, "postOvr": 74, "deltaOvr": -1, "points": 2, "gp": 17462000, "claims": 2, "isCaptain": false, "postRank": 27, "teamColor": "#e60017", "ehp": 4.55278, "ehb": 0.12, "uniqueClaims": 2}, {"name": "lailipop", "key": "lailipop", "draftPick": 26, "preOvr": 72, "postOvr": 76, "deltaOvr": 4, "points": 10, "gp": 17712057, "claims": 10, "isCaptain": false, "postRank": 25, "teamColor": "#e60017", "ehp": 6.77252, "ehb": 14.99624, "uniqueClaims": 10}], "postStandRank": 2}, {"name": "Team 3", "color": "#05ff05", "captain": "Bear L", "preAvg": 80.2, "postAvg": 81.0, "deltaAvg": 0.8, "points": 43, "gp": 528312842, "claims": 43, "ehp": 21.45, "ehb": 83.24, "members": [{"name": "Bear L", "key": "bearl", "draftPick": null, "preOvr": 91, "postOvr": 90, "deltaOvr": -1, "points": 6, "gp": 376887564, "claims": 6, "isCaptain": true, "postRank": 9, "teamColor": "#05ff05", "ehp": 1.83043, "ehb": 30.05105, "uniqueClaims": 6}, {"name": "uncled863", "key": "uncled863", "draftPick": 3, "preOvr": 89, "postOvr": 88, "deltaOvr": -1, "points": 0, "gp": 0, "claims": 0, "isCaptain": false, "postRank": 12, "teamColor": "#05ff05", "ehp": 0.11368, "ehb": 1.85577, "uniqueClaims": 0}, {"name": "Moondancer", "key": "moondancer", "draftPick": 4, "preOvr": 86, "postOvr": 86, "deltaOvr": 0, "points": 2, "gp": 7800000, "claims": 2, "isCaptain": false, "postRank": 14, "teamColor": "#05ff05", "ehp": 2.85839, "ehb": 14.29877, "uniqueClaims": 2}, {"name": "Toopro4DC", "key": "toopro4dc", "draftPick": 9, "preOvr": 92, "postOvr": 92, "deltaOvr": 0, "points": 6, "gp": 29967253, "claims": 6, "isCaptain": false, "postRank": 8, "teamColor": "#05ff05", "ehp": 0.14585, "ehb": 2.75849, "uniqueClaims": 6}, {"name": "J ennifer", "key": "jennifer", "draftPick": 10, "preOvr": 76, "postOvr": 75, "deltaOvr": -1, "points": 8, "gp": 27479813, "claims": 8, "isCaptain": false, "postRank": 26, "teamColor": "#05ff05", "ehp": 0.25241, "ehb": 9.41449, "uniqueClaims": 8}, {"name": "Dark Condoms", "key": "darkcondoms", "draftPick": 15, "preOvr": 89, "postOvr": 89, "deltaOvr": 0, "points": 5, "gp": 14899498, "claims": 5, "isCaptain": false, "postRank": 11, "teamColor": "#05ff05", "ehp": 1.83592, "ehb": 5.2501, "uniqueClaims": 5}, {"name": "aeyrie v", "key": "aeyriev", "draftPick": 16, "preOvr": 76, "postOvr": 77, "deltaOvr": 1, "points": 6, "gp": 52326752, "claims": 6, "isCaptain": false, "postRank": 24, "teamColor": "#05ff05", "ehp": 4.62874, "ehb": 10.17768, "uniqueClaims": 6}, {"name": "invadeherzim", "key": "invadeherzim", "draftPick": 21, "preOvr": 71, "postOvr": 79, "deltaOvr": 8, "points": 7, "gp": 17414403, "claims": 7, "isCaptain": false, "postRank": 22, "teamColor": "#05ff05", "ehp": 8.64391, "ehb": 9.30108, "uniqueClaims": 7}, {"name": "Letha1Nox", "key": "letha1nox", "draftPick": 22, "preOvr": 64, "postOvr": 64, "deltaOvr": 0, "points": 1, "gp": 331109, "claims": 1, "isCaptain": false, "postRank": 30, "teamColor": "#05ff05", "ehp": 0.0, "ehb": 0.0, "uniqueClaims": 1}, {"name": "sto3pt3g3l", "key": "sto3pt3g3l", "draftPick": 27, "preOvr": 68, "postOvr": 70, "deltaOvr": 2, "points": 2, "gp": 1206450, "claims": 2, "isCaptain": false, "postRank": 29, "teamColor": "#05ff05", "ehp": 1.1417, "ehb": 0.1375, "uniqueClaims": 2}], "postStandRank": 3}]};
+
+function normalizeName(name) {
+  return String(name || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+}
+function fmtNum(n) {
+  return Number(n || 0).toLocaleString();
+}
+function fmtShort(n) {
+  n = Number(n || 0);
+  if (Math.abs(n) >= 1_000_000_000) return (n / 1_000_000_000).toFixed(2).replace(/\.00$/, '') + 'B';
+  if (Math.abs(n) >= 1_000_000) return (n / 1_000_000).toFixed(2).replace(/\.00$/, '') + 'M';
+  if (Math.abs(n) >= 1_000) return (n / 1_000).toFixed(1).replace(/\.0$/, '') + 'k';
+  return fmtNum(n);
+}
+function fmtSigned(n) {
+  if (n == null || Number.isNaN(Number(n))) return '—';
+  n = Number(n);
+  if (n > 0) return '+' + n;
+  if (n < 0) return String(n);
+  return '0';
+}
+function escapeHtml(str) {
+  return String(str ?? '').replace(/[&<>"]/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[ch]));
+}
+function metricCard(label, value, tiny='') {
+  return `<div class="metric-card"><div class="label">${label}</div><div class="value">${value}</div>${tiny ? `<div class="tiny">${tiny}</div>` : ''}</div>`;
+}
+function signClass(value) {
+  if (value > 0) return 'up';
+  if (value < 0) return 'down';
+  return 'neutral';
+}
+function swingText(value) {
+  if (value > 0) return `▲ ${value}`;
+  if (value < 0) return `▼ ${Math.abs(value)}`;
+  return '—';
+}
+function formatEventWindow(startIso, endIso) {
+  const start = startIso ? new Date(startIso) : null;
+  const end = endIso ? new Date(endIso) : null;
+  return start && end
+    ? `${start.toLocaleDateString(undefined, { month:'short', day:'numeric', year:'numeric' })} → ${end.toLocaleDateString(undefined, { month:'short', day:'numeric', year:'numeric' })}`
+    : 'Range not found in save';
+}
+function formatTimestamp(ms) {
+  if (!ms) return 'Unknown time';
+  const dt = new Date(Number(ms));
+  if (Number.isNaN(dt.getTime())) return 'Unknown time';
+  return dt.toLocaleString(undefined, { month:'short', day:'numeric', hour:'numeric', minute:'2-digit' });
+}
+function sortByAlpha(a,b) {
+  return String(a).localeCompare(String(b));
+}
+
+function deriveFromSave(save) {
+  const tasksById = Object.fromEntries((save.tasks || []).map(task => [task.id, task]));
+  const playersByNorm = {};
+  (save.teams || []).forEach(team => {
+    (team.players || []).forEach((player, idx) => {
+      const key = normalizeName(player.name);
+      playersByNorm[key] = {
+        key,
+        saveName: player.name,
+        team: team.name,
+        teamColor: team.color || '#7ab8ff',
+        isCaptain: idx === 0,
+        points: Number(player.points ?? player.score ?? 0),
+        gp: Number(player.gp ?? 0),
+        combat: Number(player.combatLevel ?? 0),
+        totalLevel: Number(player.totalLevel ?? 0)
+      };
+    });
+  });
+
+  const eventStats = {};
+  const tileGroupsByPlayer = {};
+  (save.boardReplayEvents || []).forEach(ev => {
+    if (ev.type && ev.type !== 'complete') return;
+    const entry = (ev.entries && ev.entries[0]) || {};
+    const key = normalizeName(ev.playerName || entry.playerName || '');
+    if (!key) return;
+
+    if (!eventStats[key]) eventStats[key] = { claims: 0, uniqueKeys: new Set() };
+    if (!tileGroupsByPlayer[key]) tileGroupsByPlayer[key] = {};
+
+    const task = tasksById[ev.taskId] || {};
+    const tileKey = String(ev.taskId ?? normalizeName(ev.taskName) ?? ev.tileId ?? `${key}_${eventStats[key].claims + 1}`);
+    const gpValue = Number(ev.gpValue ?? entry.gp ?? 0);
+    const pointValue = Number(ev.pointValue ?? entry.points ?? 0);
+    const ts = Number(ev.timestamp ?? entry.completedAt ?? 0) || null;
+    const cats = Array.isArray(task.categories) && task.categories.length
+      ? task.categories
+      : (task.category ? [task.category] : []);
+
+    eventStats[key].claims += 1;
+    eventStats[key].uniqueKeys.add(tileKey);
+
+    if (!tileGroupsByPlayer[key][tileKey]) {
+      tileGroupsByPlayer[key][tileKey] = {
+        tileKey,
+        taskId: ev.taskId ?? null,
+        name: ev.taskName || task.name || 'Unknown tile',
+        image: task.imageURL || task.image || '',
+        category: cats[0] || '',
+        categories: cats,
+        difficulty: task.difficulty || '',
+        wikiURL: task.wikiURL || '',
+        count: 0,
+        totalGp: 0,
+        totalPoints: 0,
+        firstClaimAt: ts,
+        lastClaimAt: ts
+      };
+    }
+
+    const group = tileGroupsByPlayer[key][tileKey];
+    group.count += 1;
+    group.totalGp += gpValue;
+    group.totalPoints += pointValue;
+    if (ts) {
+      group.firstClaimAt = group.firstClaimAt ? Math.min(group.firstClaimAt, ts) : ts;
+      group.lastClaimAt = group.lastClaimAt ? Math.max(group.lastClaimAt, ts) : ts;
+    }
+  });
+
+  const wom = {};
+  const womPlayers = (save.wiseOldManRangeInsights && save.wiseOldManRangeInsights.players) ? save.wiseOldManRangeInsights.players : {};
+  Object.entries(womPlayers).forEach(([name, row]) => {
+    wom[normalizeName(name)] = {
+      ehp: Number(row.ehpGained ?? 0),
+      ehb: Number(row.ehbGained ?? 0)
+    };
+  });
+
+  const preRank = Object.entries(DRAFT_META)
+    .sort((a, b) => {
+      if (b[1].preOvr !== a[1].preOvr) return b[1].preOvr - a[1].preOvr;
+      return a[1].displayName.localeCompare(b[1].displayName);
+    })
+    .reduce((acc, [key], idx) => (acc[key] = idx + 1, acc), {});
+
+  const keys = Array.from(new Set([...Object.keys(DRAFT_META), ...Object.keys(playersByNorm)]));
+  const players = keys.map(key => {
+    const meta = DRAFT_META[key] || {};
+    const saveRow = playersByNorm[key] || {};
+    const ev = eventStats[key] || { claims: 0, uniqueKeys: new Set() };
+    const womRow = wom[key] || { ehp: 0, ehb: 0 };
+    const tiles = Object.values(tileGroupsByPlayer[key] || {})
+      .sort((a, b) => (b.totalGp - a.totalGp) || (b.count - a.count) || a.name.localeCompare(b.name));
+
+    const claims = Number(ev.claims || 0);
+    const points = Number(saveRow.points ?? 0);
+    const gp = Number(saveRow.gp ?? 0);
+
+    return {
+      key,
+      displayName: meta.displayName || saveRow.saveName || key,
+      team: saveRow.team || 'Unassigned',
+      teamColor: saveRow.teamColor || '#7ab8ff',
+      isCaptain: !!saveRow.isCaptain,
+      draftPick: meta.draftPick ?? null,
+      preOvr: meta.preOvr ?? null,
+      postOvr: meta.postOvr ?? null,
+      preRank: preRank[key] ?? null,
+      postRank: meta.postRank ?? null,
+      rankSwing: (preRank[key] != null && meta.postRank != null) ? (preRank[key] - meta.postRank) : null,
+      deltaOvr: (meta.preOvr != null && meta.postOvr != null) ? (meta.postOvr - meta.preOvr) : null,
+      points,
+      gp,
+      claims,
+      uniqueClaims: ev.uniqueKeys ? ev.uniqueKeys.size : 0,
+      ehp: Number(womRow.ehp || 0),
+      ehb: Number(womRow.ehb || 0),
+      combat: Number(saveRow.combat || 0),
+      totalLevel: Number(saveRow.totalLevel || 0),
+      tiles,
+      gpPerClaim: claims ? Number((gp / claims).toFixed(2)) : 0,
+      pointsPerClaim: claims ? Number((points / claims).toFixed(2)) : 0
+    };
+  });
+
+  const nonCaptains = players.filter(p => !p.isCaptain).sort((a, b) => (b.points - a.points) || (b.gp - a.gp));
+  nonCaptains.forEach((p, idx) => {
+    p.pointsRank = idx + 1;
+    p.draftValue = p.draftPick != null ? p.draftPick - p.pointsRank : null;
+  });
+  players.filter(p => p.isCaptain).forEach(p => {
+    p.pointsRank = null;
+    p.draftValue = null;
+  });
+
+  const teams = (save.teams || []).map(team => {
+    const members = players
+      .filter(p => p.team === team.name)
+      .sort((a, b) => {
+        if (a.isCaptain && !b.isCaptain) return -1;
+        if (!a.isCaptain && b.isCaptain) return 1;
+        if (a.draftPick == null && b.draftPick == null) return a.displayName.localeCompare(b.displayName);
+        if (a.draftPick == null) return -1;
+        if (b.draftPick == null) return 1;
+        return a.draftPick - b.draftPick;
+      });
+    const avg = key => members.length ? (members.reduce((sum, p) => sum + Number(p[key] || 0), 0) / members.length) : 0;
+    return {
+      name: team.name,
+      color: team.color || '#7ab8ff',
+      captain: members.find(p => p.isCaptain)?.displayName || '—',
+      preAvg: Number(avg('preOvr').toFixed(1)),
+      postAvg: Number(avg('postOvr').toFixed(1)),
+      deltaAvg: Number(avg('deltaOvr').toFixed(1)),
+      points: members.reduce((sum, p) => sum + p.points, 0),
+      gp: members.reduce((sum, p) => sum + p.gp, 0),
+      claims: members.reduce((sum, p) => sum + p.claims, 0),
+      ehp: Number(members.reduce((sum, p) => sum + p.ehp, 0).toFixed(2)),
+      ehb: Number(members.reduce((sum, p) => sum + p.ehb, 0).toFixed(2)),
+      members: members.map(p => ({
+        name: p.displayName,
+        key: p.key,
+        draftPick: p.draftPick,
+        preOvr: p.preOvr,
+        postOvr: p.postOvr,
+        deltaOvr: p.deltaOvr,
+        points: p.points,
+        gp: p.gp,
+        claims: p.claims,
+        uniqueClaims: p.uniqueClaims,
+        isCaptain: p.isCaptain,
+        postRank: p.postRank,
+        teamColor: p.teamColor,
+        ehp: p.ehp,
+        ehb: p.ehb
+      }))
+    };
+  }).sort((a, b) => (b.points - a.points) || (b.gp - a.gp));
+
+  teams.forEach((team, idx) => team.postStandRank = idx + 1);
+
+  return {
+    sourceFile: 'loaded JSON',
+    eventWindow: {
+      start: save.wiseOldManRangeInsights?.resolvedStartAt || null,
+      end: save.wiseOldManRangeInsights?.resolvedEndAt || null
+    },
+    totals: {
+      players: players.length,
+      teams: teams.length,
+      claims: players.reduce((sum, p) => sum + p.claims, 0),
+      points: players.reduce((sum, p) => sum + p.points, 0),
+      gp: players.reduce((sum, p) => sum + p.gp, 0),
+      ehp: Number(players.reduce((sum, p) => sum + p.ehp, 0).toFixed(2)),
+      ehb: Number(players.reduce((sum, p) => sum + p.ehb, 0).toFixed(2))
+    },
+    players: players.sort((a, b) => (a.postRank ?? 999) - (b.postRank ?? 999) || a.displayName.localeCompare(b.displayName)),
+    teams
+  };
+}
+
+let state = JSON.parse(JSON.stringify(DEFAULT_DATA));
+
+function render(data) {
+  const topMetrics = document.getElementById('topMetrics');
+  topMetrics.innerHTML = [
+    metricCard('Players', fmtNum(data.totals.players), `${fmtNum(data.totals.teams)} teams`),
+    metricCard('Claims', fmtNum(data.totals.claims), 'From replay history'),
+    metricCard('Points', fmtNum(data.totals.points), 'From save totals'),
+    metricCard('GP', fmtShort(data.totals.gp), 'Team/player totals'),
+    metricCard('EHB', fmtNum(data.totals.ehb), 'Wise Old Man gain'),
+    metricCard('Event window', formatEventWindow(data.eventWindow?.start, data.eventWindow?.end), data.sourceFile || '')
+  ].join('');
+
+  renderMovers(data);
+  renderTeams(data);
+  renderFilters(data);
+  renderTable(data);
+  renderCharts(data);
+}
+
+function renderMovers(data) {
+  const players = data.players.slice();
+  const biggestRise = players.slice().sort((a,b) => (b.rankSwing || -999) - (a.rankSwing || -999))[0];
+  const biggestFall = players.slice().sort((a,b) => (a.rankSwing || 999) - (b.rankSwing || 999))[0];
+  const biggestGain = players.slice().sort((a,b) => (b.deltaOvr || -999) - (a.deltaOvr || -999))[0];
+  const bestValue = players.filter(p => !p.isCaptain && p.draftValue != null).slice().sort((a,b) => b.draftValue - a.draftValue)[0];
+  document.getElementById('moverKpis').innerHTML = `
+    <div class="kpi">
+      <div class="eyebrow">Biggest rank climb</div>
+      <div class="headline">${escapeHtml(biggestRise?.displayName || '—')}</div>
+      <div class="detail">${biggestRise ? `${swingText(biggestRise.rankSwing)} spots • post #${biggestRise.postRank}` : '—'}</div>
+    </div>
+    <div class="kpi">
+      <div class="eyebrow">Biggest rank drop</div>
+      <div class="headline">${escapeHtml(biggestFall?.displayName || '—')}</div>
+      <div class="detail">${biggestFall ? `${swingText(biggestFall.rankSwing)} spots • post #${biggestFall.postRank}` : '—'}</div>
+    </div>
+    <div class="kpi">
+      <div class="eyebrow">Largest OVR gain</div>
+      <div class="headline">${escapeHtml(biggestGain?.displayName || '—')}</div>
+      <div class="detail">${biggestGain ? `${fmtSigned(biggestGain.deltaOvr)} OVR • pre ${biggestGain.preOvr} → post ${biggestGain.postOvr}` : '—'}</div>
+    </div>
+    <div class="kpi">
+      <div class="eyebrow">Best draft value by points</div>
+      <div class="headline">${escapeHtml(bestValue?.displayName || '—')}</div>
+      <div class="detail">${bestValue ? `Pick ${bestValue.draftPick} finished ${bestValue.pointsRank} by points` : '—'}</div>
+    </div>
+  `;
+}
+
+function renderTeams(data) {
+  const shell = document.getElementById('teamCards');
+  const maxPoints = Math.max(...data.teams.map(t => t.points), 1);
+  shell.innerHTML = data.teams.map(team => {
+    const members = team.members.map(member => `
+      <div class="member">
+        <div>${member.isCaptain ? `<span class="mini-pill">Captain</span>` : `<span class="mini-pill">Pick ${member.draftPick}</span>`}</div>
+        <div class="name">${escapeHtml(member.name)}</div>
+        <div class="hide-sm">${member.postOvr ?? '—'} OVR</div>
+        <div class="${signClass(member.deltaOvr)} hide-sm">${fmtSigned(member.deltaOvr)}</div>
+        <div class="hide-sm">${fmtNum(member.points)} pts</div>
+        <div>${fmtShort(member.gp)}</div>
+      </div>
+    `).join('');
+    return `
+      <div class="team-card" style="--team-color:${team.color}">
+        <div class="team-head">
+          <div>
+            <h3>${escapeHtml(team.name)}</h3>
+            <div class="team-meta">Captain: ${escapeHtml(team.captain)} • Standings #${team.postStandRank}</div>
+          </div>
+          <div class="rank-pill">${fmtNum(team.points)} pts • ${fmtShort(team.gp)}</div>
+        </div>
+        <div class="stat-row">
+          <div class="team-stat">
+            <div class="k">Average OVR</div>
+            <div class="v">${team.preAvg} → ${team.postAvg}</div>
+          </div>
+          <div class="team-stat">
+            <div class="k">Avg OVR Δ</div>
+            <div class="v ${signClass(team.deltaAvg)}">${fmtSigned(team.deltaAvg)}</div>
+          </div>
+          <div class="team-stat">
+            <div class="k">Claims / EHB</div>
+            <div class="v">${fmtNum(team.claims)} / ${team.ehb}</div>
+          </div>
+        </div>
+        <div style="margin-top:12px">
+          <div class="muted small" style="margin-bottom:8px">Team points pace</div>
+          <div class="bar-rail"><div class="bar-fill" style="width:${(team.points/maxPoints)*100}%; background:${team.color}"></div></div>
+        </div>
+        <div class="member-list">${members}</div>
+      </div>
+    `;
+  }).join('');
+}
+
+function currentFilteredPlayers(data) {
+  const q = document.getElementById('searchBox').value.trim().toLowerCase();
+  const team = document.getElementById('teamFilter').value;
+  const sort = document.getElementById('sortSelect').value;
+  const players = data.players.filter(p => {
+    const matchesSearch = !q || p.displayName.toLowerCase().includes(q) || p.team.toLowerCase().includes(q);
+    const matchesTeam = team === 'all' || p.team === team;
+    return matchesSearch && matchesTeam;
+  }).slice();
+
+  const ascKeys = new Set(['postRank', 'draftPick']);
+  players.sort((a, b) => {
+    const av = a[sort];
+    const bv = b[sort];
+    const aNull = av === null || av === undefined || av === '';
+    const bNull = bv === null || bv === undefined || bv === '';
+    if (aNull && bNull) return a.displayName.localeCompare(b.displayName);
+    if (aNull) return 1;
+    if (bNull) return -1;
+    if (ascKeys.has(sort)) return (av - bv) || a.displayName.localeCompare(b.displayName);
+    return (bv - av) || a.displayName.localeCompare(b.displayName);
+  });
+  return players;
+}
+
+function renderFilters(data) {
+  const select = document.getElementById('teamFilter');
+  const previous = select.value || 'all';
+  select.innerHTML = `<option value="all">All teams</option>` + data.teams.map(t => `<option value="${escapeHtml(t.name)}">${escapeHtml(t.name)}</option>`).join('');
+  if ([...select.options].some(o => o.value === previous)) select.value = previous;
+}
+
+function renderTable(data) {
+  const players = currentFilteredPlayers(data);
+  const tbody = document.getElementById('playerTbody');
+  tbody.innerHTML = players.map(p => `
+    <tr>
+      <td>${p.postRank ?? '—'}</td>
+      <td class="${signClass(p.rankSwing)}">${swingText(p.rankSwing)}</td>
+      <td>${p.isCaptain ? '<span class="pill">Captain</span>' : (p.draftPick ?? '—')}</td>
+      <td>
+        <button type="button" class="player-trigger" data-player-key="${escapeHtml(p.key)}">
+          <span class="dot" style="background:${p.teamColor}"></span>
+          <span>${escapeHtml(p.displayName)}</span>
+        </button>
+      </td>
+      <td>${escapeHtml(p.team)}</td>
+      <td>${p.preOvr ?? '—'}</td>
+      <td>${p.postOvr ?? '—'}</td>
+      <td class="${signClass(p.deltaOvr)}">${fmtSigned(p.deltaOvr)}</td>
+      <td>${fmtNum(p.points)}</td>
+      <td>${fmtShort(p.gp)}</td>
+      <td>${fmtNum(p.claims)}</td>
+      <td>${fmtNum(p.uniqueClaims)}</td>
+      <td>${p.ehb ? p.ehb.toFixed(2) : '0.00'}</td>
+      <td>${p.ehp ? p.ehp.toFixed(2) : '0.00'}</td>
+    </tr>
+  `).join('') || `<tr><td colspan="14" class="muted">No players match the current filters.</td></tr>`;
+
+  tbody.querySelectorAll('.player-trigger').forEach(btn => {
+    btn.addEventListener('click', () => openPlayerDrawer(btn.dataset.playerKey));
+  });
+}
+
+function renderBarChart(container, rows) {
+  const max = Math.max(...rows.map(r => Number(r.value || 0)), 1);
+  container.innerHTML = `<div class="bar-list">` + rows.map(r => `
+    <div class="bar-row">
+      <div>${escapeHtml(r.label)}</div>
+      <div class="bar-rail"><div class="bar-fill" style="width:${(Number(r.value||0)/max)*100}%; background:${r.color || '#7ab8ff'}"></div></div>
+      <div>${r.display ?? fmtShort(r.value)}</div>
+    </div>
+  `).join('') + `</div>`;
+}
+
+function renderScatter(container, points, xLabel, yLabel) {
+  const width = 760, height = 340, pad = 42;
+  const usableW = width - pad * 2;
+  const usableH = height - pad * 2;
+  const xs = points.map(p => p.x);
+  const ys = points.map(p => p.y);
+  const minX = Math.min(...xs, 0);
+  const maxX = Math.max(...xs, 1);
+  const minY = Math.min(...ys, 0);
+  const maxY = Math.max(...ys, 1);
+  const xScale = x => pad + ((x - minX) / Math.max(maxX - minX, 1)) * usableW;
+  const yScale = y => height - pad - ((y - minY) / Math.max(maxY - minY, 1)) * usableH;
+
+  const circles = points.map(p => `
+    <g>
+      <circle cx="${xScale(p.x).toFixed(1)}" cy="${yScale(p.y).toFixed(1)}" r="6.5" fill="${p.color}" fill-opacity=".9" stroke="rgba(255,255,255,.85)" stroke-width="1.2">
+        <title>${p.label} • Pick ${p.x} • ${yLabel} ${p.y}</title>
+      </circle>
+    </g>
+  `).join('');
+
+  const xTicks = Array.from(new Set([1,5,10,15,20,25,27].filter(v => v >= minX && v <= maxX)));
+  const yTicks = Array.from(new Set([0,2,4,6,8,10,12,14,16,18,20].filter(v => v >= minY && v <= maxY))).slice(0,8);
+
+  container.innerHTML = `
+    <svg class="scatter" viewBox="0 0 ${width} ${height}" preserveAspectRatio="none">
+      <line x1="${pad}" y1="${height - pad}" x2="${width - pad}" y2="${height - pad}" stroke="rgba(255,255,255,.18)" />
+      <line x1="${pad}" y1="${pad}" x2="${pad}" y2="${height - pad}" stroke="rgba(255,255,255,.18)" />
+      ${xTicks.map(v => `
+        <g>
+          <line x1="${xScale(v)}" y1="${height - pad}" x2="${xScale(v)}" y2="${height - pad + 6}" stroke="rgba(255,255,255,.18)" />
+          <text x="${xScale(v)}" y="${height - 12}" fill="rgba(220,232,255,.72)" font-size="11" text-anchor="middle">${v}</text>
+        </g>
+      `).join('')}
+      ${yTicks.map(v => `
+        <g>
+          <line x1="${pad - 6}" y1="${yScale(v)}" x2="${pad}" y2="${yScale(v)}" stroke="rgba(255,255,255,.18)" />
+          <text x="12" y="${yScale(v) + 4}" fill="rgba(220,232,255,.72)" font-size="11">${v}</text>
+        </g>
+      `).join('')}
+      ${circles}
+      <text x="${width/2}" y="${height-2}" fill="rgba(220,232,255,.72)" font-size="12" text-anchor="middle">${xLabel}</text>
+      <text x="14" y="${height/2}" fill="rgba(220,232,255,.72)" font-size="12" text-anchor="middle" transform="rotate(-90 14 ${height/2})">${yLabel}</text>
+    </svg>
+    <div class="legend">
+      <span><i class="dot" style="background:#3d88eb"></i>Team 1</span>
+      <span><i class="dot" style="background:#e60017"></i>Team 2</span>
+      <span><i class="dot" style="background:#05ff05"></i>Team 3</span>
+    </div>
+  `;
+}
+
+function renderCharts(data) {
+  renderBarChart(document.getElementById('teamAvgChart'), data.teams.flatMap(team => ([
+    { label: `${team.name} pre`, value: team.preAvg, color: team.color, display: team.preAvg.toFixed(1) },
+    { label: `${team.name} post`, value: team.postAvg, color: team.color, display: team.postAvg.toFixed(1) }
+  ])));
+
+  renderBarChart(document.getElementById('teamTotalsChart'), data.teams.flatMap(team => ([
+    { label: `${team.name} points`, value: team.points, color: team.color, display: fmtNum(team.points) },
+    { label: `${team.name} claims`, value: team.claims, color: team.color, display: fmtNum(team.claims) },
+    { label: `${team.name} gp`, value: team.gp, color: team.color, display: fmtShort(team.gp) }
+  ])));
+
+  const topMovers = data.players.slice().sort((a, b) => (b.deltaOvr || -999) - (a.deltaOvr || -999)).slice(0, 12);
+  renderBarChart(document.getElementById('deltaChart'), topMovers.map(p => ({
+    label: p.displayName,
+    value: Math.max(p.deltaOvr || 0, 0),
+    color: p.teamColor,
+    display: fmtSigned(p.deltaOvr)
+  })));
+
+  const pickPoints = data.players.filter(p => !p.isCaptain && p.draftPick != null).map(p => ({
+    x: p.draftPick,
+    y: p.points,
+    label: p.displayName,
+    color: p.teamColor
+  }));
+  renderScatter(document.getElementById('pickPointsScatter'), pickPoints, 'Draft pick', 'Points');
+}
+
+function summarizeCategories(tiles) {
+  const counts = {};
+  (tiles || []).forEach(tile => {
+    const cat = tile.category || 'Other';
+    counts[cat] = (counts[cat] || 0) + tile.count;
+  });
+  return Object.entries(counts)
+    .sort((a,b) => (b[1] - a[1]) || a[0].localeCompare(b[0]))
+    .slice(0, 8);
+}
+
+function tileCardMarkup(tile) {
+  const title = escapeHtml(tile.name);
+  const meta = [tile.category, tile.difficulty].filter(Boolean).map(escapeHtml).join(' • ');
+  const body = `
+    <div class="tile-thumb">
+      ${tile.image ? `<img loading="lazy" src="${tile.image}" alt="${title}" onerror="this.style.display='none'; this.parentElement.querySelector('.fallback').style.display='grid';">` : ''}
+      <span class="fallback">${escapeHtml((tile.name || '?').slice(0,1).toUpperCase())}</span>
+      ${tile.count > 1 ? `<span class="tile-badge">x${fmtNum(tile.count)}</span>` : ''}
+    </div>
+    <div>
+      <div class="tile-title">${title}</div>
+      <div class="tile-meta">${meta || 'Tile'}${tile.lastClaimAt ? ` • last claim ${escapeHtml(formatTimestamp(tile.lastClaimAt))}` : ''}</div>
+      <div class="tile-stats">
+        <span class="chip">${fmtShort(tile.totalGp)} GP</span>
+        <span class="chip">${fmtNum(tile.totalPoints)} pt</span>
+        ${tile.count > 1 ? `<span class="chip">${fmtNum(tile.count)} claims</span>` : ''}
+      </div>
+    </div>
+  `;
+  if (tile.wikiURL) {
+    return `<a class="tile-card" href="${escapeHtml(tile.wikiURL)}" target="_blank" rel="noopener noreferrer">${body}</a>`;
+  }
+  return `<div class="tile-card">${body}</div>`;
+}
+
+function renderPlayerDrawer(player) {
+  const title = document.getElementById('drawerTitle');
+  const subtitle = document.getElementById('drawerSubtitle');
+  const body = document.getElementById('drawerBody');
+  title.textContent = player.displayName;
+  subtitle.textContent = `${player.team} • Post #${player.postRank ?? '—'} • Pick ${player.isCaptain ? 'Captain' : (player.draftPick ?? '—')}`;
+
+  const categoryBits = summarizeCategories(player.tiles);
+  const categoryHtml = categoryBits.length
+    ? `<div class="chip-row">${categoryBits.map(([name, count]) => `<span class="chip">${escapeHtml(name)} • ${fmtNum(count)}</span>`).join('')}</div>`
+    : '';
+
+  const tiles = (player.tiles || []);
+  body.innerHTML = `
+    <div class="drawer-metrics">
+      <div class="drawer-metric"><div class="k">Claims</div><div class="v">${fmtNum(player.claims)}</div></div>
+      <div class="drawer-metric"><div class="k">Unique tiles</div><div class="v">${fmtNum(player.uniqueClaims)}</div></div>
+      <div class="drawer-metric"><div class="k">Points</div><div class="v">${fmtNum(player.points)}</div></div>
+      <div class="drawer-metric"><div class="k">GP</div><div class="v">${fmtShort(player.gp)}</div></div>
+    </div>
+    ${categoryHtml || '<div class="empty-state">No category spread to show yet.</div>'}
+    <div class="section-note" style="margin:0">Icons are grouped by item/tile. When the same tile was claimed more than once, it shows as a single card with an xN badge.</div>
+    ${tiles.length
+      ? `<div class="tile-grid">${tiles.map(tile => tileCardMarkup(tile)).join('')}</div>`
+      : `<div class="empty-state">${escapeHtml(player.displayName)} did not log any claimed tiles in this save.</div>`}
+  `;
+}
+
+function openPlayerDrawer(playerKey) {
+  const player = state.players.find(p => p.key === playerKey);
+  if (!player) return;
+  renderPlayerDrawer(player);
+  document.getElementById('itemDrawer').classList.add('open');
+  document.getElementById('drawerBackdrop').classList.add('open');
+  document.body.classList.add('drawer-open');
+  document.getElementById('itemDrawer').setAttribute('aria-hidden', 'false');
+}
+function closePlayerDrawer() {
+  document.getElementById('itemDrawer').classList.remove('open');
+  document.getElementById('drawerBackdrop').classList.remove('open');
+  document.body.classList.remove('drawer-open');
+  document.getElementById('itemDrawer').setAttribute('aria-hidden', 'true');
+}
+
+document.getElementById('searchBox').addEventListener('input', () => renderTable(state));
+document.getElementById('teamFilter').addEventListener('change', () => renderTable(state));
+document.getElementById('sortSelect').addEventListener('change', () => renderTable(state));
+document.getElementById('drawerClose').addEventListener('click', closePlayerDrawer);
+document.getElementById('drawerBackdrop').addEventListener('click', closePlayerDrawer);
+document.addEventListener('keydown', (event) => {
+  if (event.key === 'Escape') closePlayerDrawer();
+});
+
+document.getElementById('saveInput').addEventListener('change', async (event) => {
+  const file = event.target.files && event.target.files[0];
+  if (!file) return;
+  try {
+    const text = await file.text();
+    const json = JSON.parse(text);
+    state = deriveFromSave(json);
+    state.sourceFile = file.name;
+    render(state);
+    closePlayerDrawer();
+    document.getElementById('statusLine').textContent = `Loaded ${file.name} successfully. Save-derived stats and tile visuals refreshed; draft/pick/rank snapshot stayed mapped to this event roster.`;
+  } catch (err) {
+    console.error(err);
+    document.getElementById('statusLine').textContent = `Could not parse ${file?.name || 'file'}.`;
+    alert('That file could not be parsed as a clan event save JSON.');
+  }
+});
+
+document.getElementById('resetBtn').addEventListener('click', () => {
+  state = JSON.parse(JSON.stringify(DEFAULT_DATA));
+  render(state);
+  closePlayerDrawer();
+  document.getElementById('statusLine').textContent = 'Reset to embedded snapshot from clanEventTool_save_fixed_v137.json.';
+  document.getElementById('saveInput').value = '';
+});
+
+render(state);
+</script>
+</body>
+</html>
